@@ -12,7 +12,7 @@ end
 #Base.hash(a::SpeciesComplex) = hash([hash(a.spec),hash(a.stoich)])
 
 # (species,stoichiometric coefficients)
-typealias SpeciesComplex Tuple{Array{Int64,1},Array{Int64,1}}
+typealias SpeciesComplex Tuple{IntVec,IntVec}
 
 # composition matrix has dimensions n_species, n_complexes
 function composition_matrix(n_species, cmplx::Vector{SpeciesComplex})
@@ -21,7 +21,7 @@ function composition_matrix(n_species, cmplx::Vector{SpeciesComplex})
         spec   = cmplx[i][1]
         stoich = cmplx[i][2]
         for j = 1 : length(spec)
-            Γ[spec[j],i] = stoich[j]
+            Γ[spec[j],i] += stoich[j]
         end
     end 
     return Γ
@@ -71,42 +71,36 @@ function complex_decomposition(n_species,reactions::Vector{Reaction})
     return composition_matrix(n_species, c), inc_mat[1:n_complex,:]
 end 
 
-#=
-
-# return the set of complexes of a reaction net.
-function complexes(reactions::Vector{Reaction})
-    # reactant complexes
-    cr = SpeciesComplex[(r.reactants,r.stoichr) for r in reactions]
-    cp = SpeciesComplex[(r.products, r.stoichp) for r in reactions]
-    # combine and sort out unique ones
-    c = unique(cat(1,cr,cp))
-    # remove empty complexes
-    filter!(x -> x!=(Int64[],Int64[]), c)
-    return c
-end
-
-
-
-
-function incidence_matrix(n_species, reactions::Vector{Reaction})
-    ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
-
-    # Composition matrix
-    comp_mat = unique(sparse(cat(2, ∇r, ∇p)), 2)
-
-    # Incidence matrix
-
-end
-
-
-# returns composition matrix and incidence matrix,
-    # get list of complexes
-    cmplx = complexes(reactions)
-=#
-
 # Compute deficiency of reaction network
 function deficiency(n_species, reactions::Vector{Reaction})
     comp_mat, inc_mat = complex_decomposition(n_species,reactions)
 
     return n_cycles(n_species,reactions) - (size(inc_mat,2)-rank(full(inc_mat)))
 end
+
+# Take the species concentration vector,
+# And return a vector of concentrations of complexes
+# z: species concentration
+complex_concentration(z, composition_matrix) = vec(exp((log(z)'*composition_matrix)))
+
+# Create a reaction system for the complexes
+function complex_basis_reactions(reactions, incidence_matrix)
+    r = Reaction[]
+    n_complexes = size(incidence_matrix,1)
+    names = ["(C$x)" for x=1:n_complexes]
+    for i = 1 : length(reactions)
+        nzind,nzval = findnz(incidence_matrix[:,i])
+
+        reactants = nzval[1] < 0 ? [nzind[1]] : [nzind[2]]
+        products  = nzval[2] > 0 ? [nzind[2]] : [nzind[1]]
+
+        append!(r, [Reaction(reactants,[1],products,[1], reactions[i].kf, reactions[i].kr, names)])
+    end 
+    return r
+end 
+
+# The inverse of the above; determine species concentrations
+# from complex concentrations.
+# Because this can be an overdefined problem in general,
+# We use 
+#species_concentration(y, composition_matrix) = 

@@ -1,21 +1,28 @@
 # This file contains the base definitions,
 # Plus mass-action kinetics.
 
-# Note: the default definition of a reaction is bidirectional.
+# Note: the default definition of a reaction is reversible.
 # This simplifies analyses for most reactions.
-# Note that no truly unidirectional reactions exist in nature,
-# And in fact unidirectional reactions _can't_ exist because
+# Note that no truly irreversible reactions exist in nature,
+# And in fact true irreversible reactions _can't_ exist because
 # this would violate microscopic reversibility.
-# However, unidirectional reactions can be simulated by setting
-# kf or kr to 0.0, which most functions can deal with correctly.
+# However, conceptually it can sometimes be convenient to
+# think of a reaction as being purely unidirectional,
+# in which case one can set kf or kr to 0.0, which is treated
+# as a special case.
+typealias IntVec AbstractArray{Unsigned,1}
+typealias StrVec AbstractArray{String,1}
 type Reaction
-    reactants    # vector of reactants
-    stoichr      # vector of stoichiometric coefficients of reactants
-    products     # vector of products
-    stoichp      # vector of stoichiometric coefficients of products
-    kf::Real     # rate constant, forward. Zero means no forward reaction.
-    kr::Real     # rate constant, backward. Zero means no backward reaction.
+    reactants::IntVec # vector of reactants
+    stoichr::IntVec   # vector of stoichiometric coefficients of reactants
+    products::IntVec  # vector of products
+    stoichp::IntVec   # vector of stoichiometric coefficients of products
+    kf::Number        # rate constant, forward. Zero means no forward reaction.
+    kr::Number        # rate constant, backward. Zero means no backward reaction.
+    names::StrVec     # Array of names of reactants. Can be empty.
 end
+
+Reaction(a,b,c,d,kf,kr) = Reaction(a,b,c,d,kf,kr,String[])
 
 type DrivenReaction
     r::Reaction  # base reaction
@@ -33,7 +40,14 @@ function Base.show(io::IO, r::Reaction)
         s = r.reactants[si]
         c = r.stoichr[si]
 
-        print(io, "$c(S$s) ")
+        cstr = c == 1 ? "" : "$c"
+
+        if isempty(r.names)
+            print(io, "$cstr(S$s) ")
+        else
+            nm = r.names[s]
+            print(io, "$cstr$nm ")
+        end 
         if si == length(r.reactants)
             break
         end 
@@ -54,7 +68,14 @@ function Base.show(io::IO, r::Reaction)
         s = r.products[si]
         c = r.stoichp[si]
 
-        print(io, "$c(S$s) ")
+        cstr = c == 1 ? "" : "$c"
+
+        if isempty(r.names)
+            print(io, "$cstr(S$s) ")
+        else
+            nm = r.names[s]
+            print(io, "$cstr$nm ")
+        end 
         if si == length(r.products)
             break
         end 

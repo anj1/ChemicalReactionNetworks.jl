@@ -32,6 +32,31 @@ function stoichiometric_matrix(n_species, reactions::Vector{Reaction})
     return ∇r,∇p
 end
 
+# generates a list of reactions from stoichiometric matrix
+function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf, kr)
+    assert(size(∇r)==size(∇p))
+    nreactions = size(∇r,2)
+
+    reactions = Array(Reaction, nreactions)
+    for i = 1 : nreactions
+        reactants,stoichr = findnz(∇r[:,i])
+        products,stoichp  = findnz(∇p[:,i])
+        reactions[i] = Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i])
+    end
+
+    return reactions
+end
+
+# return normal form of reaction net
+# for example, S1 + S1 -> S2 becomes 2S1 -> S2
+# and S3 + S1 -> S2 becomes S1 + S3 -> S2
+function normal_form(n_species, reactions::Vector{Reaction})
+    ∇r,∇p = stoichiometric_matrix(n_species, reactions)
+    kf = [r.kf for r in reactions]
+    kr = [r.kr for r in reactions]
+    return from_stoichiometric_matrix(∇r,∇p,kf,kr)
+end 
+
 function stoichiometric_nullspace(n_species, reactions::Vector{Reaction}, tr)
     # We only want net stoichiometric matrix here.
     ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
@@ -91,8 +116,8 @@ function log_equilibrium_state(n_species, reactions::Vector{Reaction})
      # compute ratio of forward to backward reactions
     free_energy = log([r.kf/r.kr for r in reactions])
 
-    dp,dr = stoichiometric_matrix(n_species,reactions)
-    del = dr-dp
+    dp,dn = stoichiometric_matrix(n_species,reactions)
+    del = dn-dp
 
     logz = full(del')\free_energy
 
@@ -102,6 +127,21 @@ function equilibrium_state(n_species, reactions::Vector{Reaction}) #, z0)
     logz, del = log_equilibrium_state(n_species, reactions)
     return exp(logz)
 end
+
+# Note: if net doesn't have equilibrium state, then above functions
+# will not return a steady state.
+# This function however will always return a steady state
+function steady_state(n_species, reactions::Vector{Reaction})
+    
+    z0 = equilibrium_state(n_species, reactions)
+
+# todo: termination criteria
+    for i=1:10000 
+       z0 += 0.005*mass_action(reactions, z0)
+    end
+
+    return z0
+end 
 
 # The equilibrium state is often under-defined;
 # this means we can add chemostats until it is fully defined,
@@ -118,3 +158,16 @@ function equilibrium_state_space(n_species, reactions::Vector{Reaction})
     return ss, logz
 end
 
+# -----------
+function cycle_affinities(n_species, reactions, cycm, z)
+    cycaff = zeros(size(cycm,2))
+
+    lnj = zeros(length(reactions))
+    for rho = 1:length(reactions)
+        ri = reactions[rho]
+        jf,jr = concentration_currents(ri, z)
+        lnj[rho] = log(jf/jr)
+    end 
+
+    return lnj'*cycm
+end

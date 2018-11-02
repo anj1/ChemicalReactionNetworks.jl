@@ -1,5 +1,11 @@
 using ChemicalReactionNetworks
 
+###
+names = ["CH₄", "O₂", "CO₂", "H₂O"]
+print(Reaction([1,2],[1,2],[3,4],[1,2],1.0,0.0,names))
+
+###
+
 reactions = [Reaction([1,2],[1,1],[3],[1],1.0,1.0),
              Reaction([1,1],[1,1],[2],[2],1.0,1.0)]
 
