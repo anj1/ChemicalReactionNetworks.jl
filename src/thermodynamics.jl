@@ -14,8 +14,8 @@ end
 # overall rate (sqrt(kf*kr)),
 # inverse temperature
 function reaction_rates(free_e, ovr_rate, beta)
-    kf = ovr_rate.*exp(-0.5*beta*free_e)
-    kr = ovr_rate.*exp( 0.5*beta*free_e)
+    kf = ovr_rate.*exp.(-0.5*beta*free_e)
+    kr = ovr_rate.*exp.( 0.5*beta*free_e)
     return kf,kr
 end
 
