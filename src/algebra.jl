@@ -2,6 +2,7 @@
 # Compute conservation laws, cycles, emergent cycles.
 
 using Nemo 
+using SparseArrays 
 
 # generate stoichiometric matrices from list of reactions.
 # matrices: (nspecies,nreactions)
