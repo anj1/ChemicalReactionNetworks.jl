@@ -10,7 +10,7 @@ function chemostatted!(reactions::Vector{Reaction}, spec::Vector{Int}, z)
         nr = length(r.reactants)
         j=1
         while (j <= nr)
-            idx = findfirst(spec, r.reactants[j])
+            idx = findfirst(x->x==r.reactants[j], spec)
             if idx>0
                 nr -= 1
                 r.kf *= z[idx]^r.stoichr[j]
@@ -25,7 +25,7 @@ function chemostatted!(reactions::Vector{Reaction}, spec::Vector{Int}, z)
         np = length(r.products)
         j=1
         while (j <= np)
-            idx = findfirst(spec, r.products[j])
+            idx = findfirst(x->x==r.products[j], spec)
             if idx>0
                 np -= 1
                 r.kr *= z[idx]^r.stoichp[j]

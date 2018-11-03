@@ -45,7 +45,7 @@ function complex_decomposition(n_species,reactions::Vector{Reaction})
         rc = (r.reactants, r.stoichr)
 
         # Find complex in list of complexes
-        idx = findfirst(c,rc)
+        idx = findfirst(x->x==rc,c)
         if idx==0  # If not already in, put it in
             append!(c, [rc])
             n_complex += 1
@@ -58,7 +58,7 @@ function complex_decomposition(n_species,reactions::Vector{Reaction})
         pc = (r.products, r.stoichp)
 
         # Find complex in list of complexes
-        idx = findfirst(c,pc)
+        idx = findfirst(x->x==pc,c)
         if idx==0  # If not already in, put it in
             append!(c, [pc])
             n_complex += 1
