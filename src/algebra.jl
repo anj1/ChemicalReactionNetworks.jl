@@ -4,6 +4,8 @@
 using Nemo 
 using SparseArrays 
 
+full(a) = convert(Array,a)
+
 # generate stoichiometric matrices from list of reactions.
 # matrices: (nspecies,nreactions)
 # returns two matrices: reactants and products
