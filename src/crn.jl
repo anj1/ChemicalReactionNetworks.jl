@@ -12,7 +12,7 @@
 # as a special case.
 const IntVec = AbstractArray{Unsigned,1}
 const StrVec = AbstractArray{String,1}
-type Reaction
+struct Reaction
     reactants::IntVec # vector of reactants
     stoichr::IntVec   # vector of stoichiometric coefficients of reactants
     products::IntVec  # vector of products
@@ -24,7 +24,7 @@ end
 
 Reaction(a,b,c,d,kf,kr) = Reaction(a,b,c,d,kf,kr,String[])
 
-type DrivenReaction
+struct DrivenReaction
     r::Reaction  # base reaction
     j_coupling   # coupling matrix
     c_offset     # offset matrix
