@@ -69,7 +69,7 @@ function stoichiometric_nullspace(n_species, reactions::Vector{Reaction}, tr)
 
     S = MatrixSpace(ZZ, size(∇)...)
 
-    ns,r = nullspace(S(full(∇)))
+    r,ns = nullspace(S(full(∇)))
     m,n = size(ns)
 
     nsm = sparse(Int[ns[i,j] for i=1:m,j=1:n])
@@ -157,7 +157,7 @@ end
 function equilibrium_state_space(n_species, reactions::Vector{Reaction})
     logz, del = log_equilibrium_state(n_species, reactions)
 
-    ss = nullspace(full(del'))
+    r,ss = nullspace(full(del'))
     return ss, logz
 end
 
