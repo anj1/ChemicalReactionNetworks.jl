@@ -10,8 +10,8 @@
 # think of a reaction as being purely unidirectional,
 # in which case one can set kf or kr to 0.0, which is treated
 # as a special case.
-typealias IntVec AbstractArray{Unsigned,1}
-typealias StrVec AbstractArray{String,1}
+const IntVec = AbstractArray{Unsigned,1}
+const StrVec = AbstractArray{String,1}
 type Reaction
     reactants::IntVec # vector of reactants
     stoichr::IntVec   # vector of stoichiometric coefficients of reactants

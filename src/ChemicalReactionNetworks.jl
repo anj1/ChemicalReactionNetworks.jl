@@ -14,11 +14,13 @@ export complexes,complex_decomposition,deficiency,complex_concentration
 export equilibrium_state,equilibrium_state_space,cycle_affinities
 export steady_state
 export complex_basis_reactions
+export free_energies,reaction_rates
 
 include("crn.jl")
 include("algebra.jl")
 include("sampling.jl")
 include("chemostat.jl")
 include("complexes.jl")
+include("thermodynamics.jl")
 
 end

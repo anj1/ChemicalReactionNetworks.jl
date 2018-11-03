@@ -12,7 +12,7 @@ end
 #Base.hash(a::SpeciesComplex) = hash([hash(a.spec),hash(a.stoich)])
 
 # (species,stoichiometric coefficients)
-typealias SpeciesComplex Tuple{IntVec,IntVec}
+const SpeciesComplex = Tuple{IntVec,IntVec}
 
 # composition matrix has dimensions n_species, n_complexes
 function composition_matrix(n_species, cmplx::Vector{SpeciesComplex})
