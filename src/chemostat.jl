@@ -11,7 +11,7 @@ function chemostatted!(reactions::Vector{Reaction}, spec::Vector{Int}, z)
         j=1
         while (j <= nr)
             idx = findfirst(x->x==r.reactants[j], spec)
-            if idx>0
+            if idx != nothing
                 nr -= 1
                 r.kf *= z[idx]^r.stoichr[j]
 
@@ -26,7 +26,7 @@ function chemostatted!(reactions::Vector{Reaction}, spec::Vector{Int}, z)
         j=1
         while (j <= np)
             idx = findfirst(x->x==r.products[j], spec)
-            if idx>0
+            if idx != nothing
                 np -= 1
                 r.kr *= z[idx]^r.stoichp[j]
 
