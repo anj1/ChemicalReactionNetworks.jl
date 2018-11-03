@@ -12,7 +12,7 @@
 # as a special case.
 const IntVec = AbstractArray{Unsigned,1}
 const StrVec = AbstractArray{String,1}
-struct Reaction
+mutable struct Reaction
     reactants::IntVec # vector of reactants
     stoichr::IntVec   # vector of stoichiometric coefficients of reactants
     products::IntVec  # vector of products
