@@ -1,4 +1,5 @@
 using ChemicalReactionNetworks
+using SparseArrays 
 
 ###
 names = ["CH₄", "O₂", "CO₂", "H₂O"]
