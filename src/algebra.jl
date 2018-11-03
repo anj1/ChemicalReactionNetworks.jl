@@ -117,7 +117,7 @@ n_cycles(n_species, reactions::Vector{Reaction}) =
 # This gives a linear system which can be solved.
 function log_equilibrium_state(n_species, reactions::Vector{Reaction})
      # compute ratio of forward to backward reactions
-    free_energy = log([r.kf/r.kr for r in reactions])
+    free_energy = log.([r.kf/r.kr for r in reactions])
 
     dp,dn = stoichiometric_matrix(n_species,reactions)
     del = dn-dp
@@ -128,7 +128,7 @@ function log_equilibrium_state(n_species, reactions::Vector{Reaction})
 end 
 function equilibrium_state(n_species, reactions::Vector{Reaction}) #, z0)
     logz, del = log_equilibrium_state(n_species, reactions)
-    return exp(logz)
+    return exp.(logz)
 end
 
 # Note: if net doesn't have equilibrium state, then above functions
