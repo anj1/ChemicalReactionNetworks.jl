@@ -3,7 +3,7 @@
 # from the simplex of species concentrations with total
 # sum of concentrations fixed to 25
 # (on average 1 mol/vol of each species).
-function rand_concentrations(n_species::Unsigned, total_conc::Real)
+function rand_concentrations(n_species::Integer total_conc::Real)
     # see 'Uniform sampling from a simplex' from StackExchange
     # Generate a list of sorted numbers from 0 to 1
     lst = cat(dims=1, [0.0], sort(rand(n_species-1)), [1.0])

@@ -9,7 +9,7 @@ full(a) = convert(Array,a)
 # generate stoichiometric matrices from list of reactions.
 # matrices: (nspecies,nreactions)
 # returns two matrices: reactants and products
-function stoichiometric_matrix(n_species, reactions::Vector{Reaction})
+function stoichiometric_matrix(n_species::Integer, reactions::Vector{Reaction})
     nr = length(reactions)
 
     ∇r = spzeros(Int, n_species, nr)
@@ -54,7 +54,7 @@ end
 # return normal form of reaction net
 # for example, S1 + S1 -> S2 becomes 2S1 -> S2
 # and S3 + S1 -> S2 becomes S1 + S3 -> S2
-function normal_form(n_species::Unsigned, reactions::Vector{Reaction})
+function normal_form(n_species::Integer, reactions::Vector{Reaction})
     ∇r,∇p = stoichiometric_matrix(n_species, reactions)
     kf = [r.kf for r in reactions]
     kr = [r.kr for r in reactions]
@@ -62,7 +62,7 @@ function normal_form(n_species::Unsigned, reactions::Vector{Reaction})
     return from_stoichiometric_matrix(∇r,∇p,kf,kr,nm)
 end 
 
-function stoichiometric_nullspace(n_species::Unsigned, reactions::Vector{Reaction}, tr)
+function stoichiometric_nullspace(n_species::Integer, reactions::Vector{Reaction}, tr)
     # We only want net stoichiometric matrix here.
     ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
     ∇ = ∇r - ∇p
@@ -81,7 +81,7 @@ end
 
 # returns dimensions of nullspace (dimension of kernel) without calculating
 # the matrix explicitly. Used for 
-function stoichiometric_dimker(n_species::Unsigned, reactions::Vector{Reaction}, tr)
+function stoichiometric_dimker(n_species::Integer, reactions::Vector{Reaction}, tr)
     ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
     ∇ = ∇r - ∇p
 
@@ -90,16 +90,16 @@ function stoichiometric_dimker(n_species::Unsigned, reactions::Vector{Reaction},
     return size(∇,2)-rank(full(∇))
 end
 
-conservation_laws(n_species::Unsigned, reactions::Vector{Reaction}) = 
+conservation_laws(n_species::Integer, reactions::Vector{Reaction}) = 
     stoichiometric_nullspace(n_species, reactions, true)
 
-n_conservation_laws(n_species::Unsigned, reactions::Vector{Reaction}) = 
+n_conservation_laws(n_species::Integer, reactions::Vector{Reaction}) = 
     stoichiometric_dimker(n_species, reactions, true)
 
-cycles(n_species::Unsigned, reactions::Vector{Reaction}) =
+cycles(n_species::Integer, reactions::Vector{Reaction}) =
     stoichiometric_nullspace(n_species, reactions, false)
 
-n_cycles(n_species::Unsigned, reactions::Vector{Reaction}) = 
+n_cycles(n_species::Integer, reactions::Vector{Reaction}) = 
     stoichiometric_dimker(n_species, reactions, false)
 
 # Compute steady-states for both detailed-balanced 
@@ -117,7 +117,7 @@ n_cycles(n_species::Unsigned, reactions::Vector{Reaction}) =
 #   log(kf/kr) = sum del_s,r log z[s]
 # And then we also append the conservation laws.
 # This gives a linear system which can be solved.
-function log_equilibrium_state(n_species::Unsigned, reactions::Vector{Reaction})
+function log_equilibrium_state(n_species::Integer, reactions::Vector{Reaction})
      # compute ratio of forward to backward reactions
     free_energy = log.([r.kf/r.kr for r in reactions])
 
@@ -128,7 +128,7 @@ function log_equilibrium_state(n_species::Unsigned, reactions::Vector{Reaction})
 
     return logz, del    
 end 
-function equilibrium_state(n_species::Unsigned, reactions::Vector{Reaction}) #, z0)
+function equilibrium_state(n_species::Integer, reactions::Vector{Reaction}) #, z0)
     logz, del = log_equilibrium_state(n_species, reactions)
     return exp.(logz)
 end
@@ -136,7 +136,7 @@ end
 # Note: if net doesn't have equilibrium state, then above functions
 # will not return a steady state.
 # This function however will always return a steady state
-function steady_state(n_species::Unsigned, reactions::Vector{Reaction})
+function steady_state(n_species::Integer, reactions::Vector{Reaction})
     
     z0 = equilibrium_state(n_species, reactions)
 
@@ -156,7 +156,7 @@ end
 # Thus every solution can be written as:
 # ss*x + logz0
 # where x is some arbitrary vector and logz0=full(del')\log_k_ratio
-function equilibrium_state_space(n_species::Unsigned, reactions::Vector{Reaction})
+function equilibrium_state_space(n_species::Integer, reactions::Vector{Reaction})
     logz, del = log_equilibrium_state(n_species, reactions)
 
     r,ss = nullspace(full(del'))
@@ -164,7 +164,7 @@ function equilibrium_state_space(n_species::Unsigned, reactions::Vector{Reaction
 end
 
 # -----------
-function cycle_affinities(n_species::Unsigned, reactions, cycm, z)
+function cycle_affinities(n_species::Integer, reactions, cycm, z)
     cycaff = zeros(size(cycm,2))
 
     lnj = zeros(length(reactions))
