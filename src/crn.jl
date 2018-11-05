@@ -96,7 +96,7 @@ function Base.show(io::IO, r::Reaction)
         end
         print(io, "k-:$kr")
     end 
-    println(io, "]")
+    print(io, "]")
 end 
 
 function Base.show(io::IO, re::DrivenReaction)

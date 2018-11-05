@@ -45,7 +45,7 @@ function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, 
         reactants,stoichr = findnz(∇r[:,i])
         products,stoichp  = findnz(∇p[:,i])
         nm = isempty(names) ? [] : names[i]
-        push!(reactions, Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i],names[i]))
+        push!(reactions, Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i],nm))
     end
 
     return reactions
