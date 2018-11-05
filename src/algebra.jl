@@ -37,14 +37,14 @@ end
 
 # generates a list of reactions from stoichiometric matrix
 function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf, kr)
-    assert(size(∇r)==size(∇p))
+    @assert size(∇r)==size(∇p)
     nreactions = size(∇r,2)
 
-    reactions = Array(Reaction, nreactions)
+    reactions = Reaction[]
     for i = 1 : nreactions
         reactants,stoichr = findnz(∇r[:,i])
         products,stoichp  = findnz(∇p[:,i])
-        reactions[i] = Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i])
+        push!(reactions, Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i],names[i]))
     end
 
     return reactions
@@ -57,7 +57,22 @@ function normal_form(n_species, reactions::Vector{Reaction})
     ∇r,∇p = stoichiometric_matrix(n_species, reactions)
     kf = [r.kf for r in reactions]
     kr = [r.kr for r in reactions]
-    return from_stoichiometric_matrix(∇r,∇p,kf,kr)
+    nm = [r.names for r in reactions]
+    return from_stoichiometric_matrix(∇r,∇p,kf,kr,nm)
+end 
+
+# Function to determine if a reaction is redundant;
+# i.e. A + 2B -> 2B + A is redundant.
+# Note that for this to work, the reaction must be in normal form,
+# Which means the reactants and products must be a sorted list.
+function ChemicalReactionNetworks.isredundant(r::Reaction)
+    if r.products != r.reactants
+        return false
+    end
+    if r.stoichp != r.stoichr 
+        return false
+    end
+    return true
 end 
 
 function stoichiometric_nullspace(n_species, reactions::Vector{Reaction}, tr)

@@ -1,6 +1,8 @@
 # This file contains the base definitions,
 # Plus mass-action kinetics.
 
+import Base.==,Base.hash,Base.reverse 
+
 # Note: the default definition of a reaction is reversible.
 # This simplifies analyses for most reactions.
 # Note that no truly irreversible reactions exist in nature,
@@ -175,4 +177,30 @@ function mass_action(reactions::Vector{DrivenReaction}, z)
     end
 
     return dz
+end
+
+reverse(r::Reaction) = Reaction(r.products,r.stoichp,r.reactants,r.stoichr,r.kr,r.kf,r.names)
+
+function test_equality(r::Reaction,p::Reaction)
+    return (r.stoichr == p.stoichr) && 
+           (r.stoichp == p.stoichp) && 
+           (r.reactants == p.reactants) && 
+           (r.products  == p.products) &&
+           (r.kf == p.kf) &&
+           (r.kr == p.kr)
+end
+
+# Two reactions are equal if they are equal in either
+# the forward or backward directions
+function ==(r::Reaction,p::Reaction)
+    return test_equality(r,p) || test_equality(reverse(r),p)
+end
+
+function hash1(r::Reaction)
+    return foldr(hash, [r.reactants,r.stoichr,r.products,r.stoichp,r.kf,r.kr,r.names]; init=zero(UInt64))
+end
+function hash(r::Reaction)
+    h1 = hash1(r)
+    h2 = hash1(reverse(r))
+    return h1+h2
 end
