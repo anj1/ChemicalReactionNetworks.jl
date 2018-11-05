@@ -15,7 +15,7 @@ end
 const SpeciesComplex = Tuple{IntVec,IntVec}
 
 # composition matrix has dimensions n_species, n_complexes
-function composition_matrix(n_species, cmplx::Vector{SpeciesComplex})
+function composition_matrix(n_species::Unsigned, cmplx::Vector{SpeciesComplex})
     Γ = spzeros(Int64,n_species, length(cmplx))
     for i in 1:length(cmplx) 
         spec   = cmplx[i][1]
@@ -31,7 +31,7 @@ end
 # composition matrix has dimensions n_species, n_complexes.
 # incidence matrix has dimensionality n_complex, n_reactions,
 # the entries indicate if a complex is the reactant or product
-function complex_decomposition(n_species,reactions::Vector{Reaction})
+function complex_decomposition(n_species::Unsigned,reactions::Vector{Reaction})
     c = SpeciesComplex[]
     inc_mat = spzeros(Int64,2*length(reactions),length(reactions))  # we can have at most 2*rho complexes
     n_complex = 0
@@ -72,7 +72,7 @@ function complex_decomposition(n_species,reactions::Vector{Reaction})
 end 
 
 # Compute deficiency of reaction network
-function deficiency(n_species, reactions::Vector{Reaction})
+function deficiency(n_species::Unsigned, reactions::Vector{Reaction})
     comp_mat, inc_mat = complex_decomposition(n_species,reactions)
 
     return n_cycles(n_species,reactions) - (size(inc_mat,2)-rank(full(inc_mat)))
@@ -84,7 +84,7 @@ end
 complex_concentration(z, composition_matrix) = vec(exp((log(z)'*composition_matrix)))
 
 # Create a reaction system for the complexes
-function complex_basis_reactions(reactions, incidence_matrix)
+function complex_basis_reactions(reactions::Unsigned, incidence_matrix)
     r = Reaction[]
     n_complexes = size(incidence_matrix,1)
     names = ["(C$x)" for x=1:n_complexes]
