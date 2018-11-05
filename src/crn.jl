@@ -181,6 +181,12 @@ end
 
 reverse(r::Reaction) = Reaction(r.products,r.stoichp,r.reactants,r.stoichr,r.kr,r.kf,r.names)
 
+# Function to determine if a reaction is redundant;
+# i.e. A + 2B -> 2B + A is redundant.
+# Note that for this to work, the reaction must be in normal form,
+# Which means the reactants and products must be a sorted list.
+isredundant(r::Reaction) = (r.products == r.reactants) && (r.stoichp == r.stoichr )
+
 function test_equality(r::Reaction,p::Reaction)
     return (r.stoichr == p.stoichr) && 
            (r.stoichp == p.stoichp) && 

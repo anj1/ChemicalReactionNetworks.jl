@@ -61,20 +61,6 @@ function normal_form(n_species, reactions::Vector{Reaction})
     return from_stoichiometric_matrix(∇r,∇p,kf,kr,nm)
 end 
 
-# Function to determine if a reaction is redundant;
-# i.e. A + 2B -> 2B + A is redundant.
-# Note that for this to work, the reaction must be in normal form,
-# Which means the reactants and products must be a sorted list.
-function ChemicalReactionNetworks.isredundant(r::Reaction)
-    if r.products != r.reactants
-        return false
-    end
-    if r.stoichp != r.stoichr 
-        return false
-    end
-    return true
-end 
-
 function stoichiometric_nullspace(n_species, reactions::Vector{Reaction}, tr)
     # We only want net stoichiometric matrix here.
     ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
