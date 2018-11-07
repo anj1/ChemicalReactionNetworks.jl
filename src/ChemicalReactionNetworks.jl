@@ -1,11 +1,10 @@
 module ChemicalReactionNetworks
 
 export Reaction
-export DrivenReaction
 export SpeciesComplex
 
 export ==,hash,isredundant
-export stoichiometric_matrix,mass_action,concentration_currents
+export stoichiometric_matrix,mass_action,mass_action!,concentration_currents
 export from_stoichiometric_matrix,normal_form
 export conservation_laws, cycles
 export n_conservation_laws, n_cycles

@@ -26,12 +26,6 @@ end
 
 Reaction(a,b,c,d,kf,kr) = Reaction(a,b,c,d,kf,kr,String[])
 
-struct DrivenReaction
-    r::Reaction  # base reaction
-    j_coupling   # coupling matrix
-    c_offset     # offset matrix
-end
-
 function Base.show(io::IO, r::Reaction)
     if (r.kf == 0.0) && (r.kr == 0.0)
         print(io, "[Non-reaction]")
@@ -99,11 +93,6 @@ function Base.show(io::IO, r::Reaction)
     print(io, "]")
 end 
 
-function Base.show(io::IO, re::DrivenReaction)
-    print(io, "driven reaction: ")
-    show(io, re.r)
-end 
-
 function concentration_currents(ri::Reaction, z)
     jf = ri.kf
     for si = 1 : length(ri.reactants)
@@ -167,16 +156,6 @@ function mass_action(reactions::Vector{Reaction}, z)
     end
 
     return dz 
-end
-
-function mass_action(reactions::Vector{DrivenReaction}, z)
-    dz = zero(z)
-
-    for ri in reactions 
-        mass_action!(dz, ri.r, z)
-    end
-
-    return dz
 end
 
 reverse(r::Reaction) = Reaction(r.products,r.stoichp,r.reactants,r.stoichr,r.kr,r.kf,r.names)
