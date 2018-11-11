@@ -36,7 +36,7 @@ function stoichiometric_matrix(n_species::Integer, reactions::Vector{Reaction})
 end
 
 # generates a list of reactions from stoichiometric matrix
-function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf, kr, names=[])
+function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf::Real, kr::Real, names=[])
     @assert size(∇r)==size(∇p)
     nreactions = size(∇r,2)
 
@@ -62,7 +62,7 @@ function normal_form(n_species::Integer, reactions::Vector{Reaction})
     return from_stoichiometric_matrix(∇r,∇p,kf,kr,nm)
 end 
 
-function stoichiometric_nullspace(n_species::Integer, reactions::Vector{Reaction}, tr)
+function stoichiometric_nullspace(n_species::Integer, reactions::Vector{Reaction}, tr::Bool)
     # We only want net stoichiometric matrix here.
     ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
     ∇ = ∇r - ∇p
@@ -81,7 +81,7 @@ end
 
 # returns dimensions of nullspace (dimension of kernel) without calculating
 # the matrix explicitly. Used for 
-function stoichiometric_dimker(n_species::Integer, reactions::Vector{Reaction}, tr)
+function stoichiometric_dimker(n_species::Integer, reactions::Vector{Reaction}, tr::Bool)
     ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
     ∇ = ∇r - ∇p
 
@@ -164,7 +164,7 @@ function equilibrium_state_space(n_species::Integer, reactions::Vector{Reaction}
 end
 
 # -----------
-function cycle_affinities(n_species::Integer, reactions, cycm, z)
+function cycle_affinities(n_species::Integer, reactions::Vector{Reaction}, cycm::AbstractMatrix, z)
     cycaff = zeros(size(cycm,2))
 
     lnj = zeros(length(reactions))
