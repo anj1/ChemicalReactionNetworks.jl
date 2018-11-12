@@ -48,20 +48,71 @@ Perhaps the most basic thing one might want to do with a CRN is to see how the n
 dz = mass_action(reactions, z)
 ```
 
-Where reactions is a list of `Reaction`s, and `z` is some instantaneous concentration of all the chemical species. This function returns the *rate of change* of the instantaneous concentration. Thus by feeding this function into an ODE solver, such as a stiff 2nd-order solver, one can solve for the full time-dynamics of the network. An example is given below.
+Where reactions is a list of `Reaction`s, and `z` is some instantaneous concentration of all the chemical species. This function returns the *rate of change* of the instantaneous concentration. Thus by feeding this function into an ODE solver, such as a stiff 2nd-order solver, one can solve for the full time-dynamics of the network. Consider a very simple example, a system consisting of just one reaction, the reaction between diatomic nitrogen and diatomic hydrogen to produce ammonia:
 
+```julia
+chems = ["N", "H₂", "NH₃"]
+reactions = [Reaction([1,2],[1,3],[3],[2],2.0,1.0,chems)]
+```
+
+Which gives the output:
+```
+N₂ + 3H₂ ⇋ 2NH₃ [k+:2.0 k-:1.0]
+```
+
+We have assumed this is happening at high temperature, so that the forward rate is only twice that of the reverse rate. Starting from a mixture of 3 parts hydrogen and 1 part nitrogen, we can evolve the concentration over time, using the `Rosenbrock23` method from [OrdinaryDiffEq.jl]():
+
+```
+using OrdinaryDiffEq
+z0 = [1.0, 3.0, 0.0]
+eom(z,p,t) = mass_action(reactions,z)
+res = solve(ODEProblem(eom,z0,(0.0,1.0)),alg=Rosenbrock23())
+```
+
+`eom` (for 'equations of motion') is a helper function that encapsulates the scope so that we don't have to pass `reactions` to the ODE solver. Note that we have specified the solution over the time from 0 to 1.
+
+The arrays `res.t` and `res.u` now contain the calculated timesteps and solutions for each timestep:
+
+<!--
+	using PyPlot
+	plot(res.t,[zz[1] for zz in res.u],res.t,[zz[2] for zz in res.u],res.t,[zz[3] for zz in res.u])
+	legend(chems)
+	savefig("/tmp/example.png",dpi=200)
+-->
+
+The solution converges to a roughly equal concentration of ammonia and hydrogen, as expected.
+
+![example](doc/example.png)
 
 #### Steady States
 
-One can find the steady states 
-
-A special class of steady states are *equilibrium* states; these are states where each reaction happens equally in the forward and backward directions. Obviously equilibrium states can only occur when all reactions are reversible. If a CRN has an equilibrium state, it can be found by solving a linear problem; the function `equilibrium_state` does this:
+A CRN may have a number of steady states; these are the states where `mass_action` returns zero. In CRN theory, we distinguish between different kinds of steady states. In particular, a steady state can satisfy *detailed balance* or *complex-balanced* conditions, or it may not satisfy these conditions. Detailed balance implies that every reaction happens at the same rate in the forward and backward directions. Such steady states are called *equilibrium states*. If a CRN has an equilibrium state, it can be found by solving a linear problem; the function `equilibrium_state` does this:
 
 ```julia
 equilibrium_state(n_species, reactions)
 ```
 
-If the CRN does not have an equilibrium state, then the above function will not return a steady state. In such a scenario, `SteadyStateProblem` from DifferentialEquations.jl can be used to find a steady state by iteratively solving until converging, starting from an initial guess. To do this we wrap `mass_action` in an equations-of-motion function, which also ensures that only positive solutions are found:
+For the ammonia example above, this function returns:
+
+```julia
+julia> ze=equilibrium_state(3,reactions)
+3-element Array{Float64,1}:
+ 0.9516951530106196
+ 0.8619728212469777
+ 1.1040895136738125
+```
+
+And we can verify that `mass_action` indeed returns (close to) zero for this:
+
+```julia
+julia> mass_action(reactions,ze)
+3-element Array{Float64,1}:
+  4.440892098500626e-16 
+  1.3322676295501878e-15
+ -8.881784197001252e-16 
+```
+
+If the CRN does not have an equilibrium state, then the above function may not return anything meaningful. In such a scenario, `SteadyStateProblem` from DifferentialEquations.jl can be used to find a steady state by iteratively solving until converging, starting from an initial guess. To do this we wrap `mass_action` in an equation of motion function that also ensures that only positive solutions are found:
 
 ```julia
 function eom(z,p,t)
@@ -73,10 +124,18 @@ function eom(z,p,t)
     end
     return dz
 end
-steady_z = solve(SteadyStateProblem(f, z0))
+steady_z = solve(SteadyStateProblem(eom, z0))
 ```
 
+For an example for the ammonia case above, this function returns:
 
+```julia
+ 0.9516951530106196
+ 0.8619728212469777
+ 1.1040895136738125
+```
+
+Which is the same as the equilibrium solution, which is what we expect since in this system the only steady state solution is the equilibrium solution.
 
 #### Catalytic System
 
@@ -97,7 +156,6 @@ reactions = [Reaction([1,4],[1,2],[5],[2],1.0,1.0,chems),
 ```
 
 This is a simple chemical system that has multiple steady states. 
-
 
 #### Pseudo-Reactions and Chemostatting
 
