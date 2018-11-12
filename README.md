@@ -155,6 +155,19 @@ Similarly, one can find the *cycles* of a CRN, which are the set of reactions th
 
 There is far more capability in this package than merely calculating time-dynamics.
 
+#### Petri Nets
+
+Any CRN can be represented in graph form. The way to do this is to assign a vertex to every species and a vertex to every reaction. There is an edge from every species vertex to every reaction vertex that it participates in. Edges are directed according to whether the species is a reactant or product. The resulting graph is called a *petri net*, and certain properties of CRNs can be computed very easily using their petri nets.
+
+The function `petri_net` produces the adjacency matrix for the Petri net of a CRN. The resulting adjacency matrix can then be input directly into, for instance, the `SimpleDiGraph` function in [LightGraphs.jl](https://github.com/JuliaGraphs/LightGraphs.jl):
+
+```julia
+using LightGraphs
+pn = SimpleDiGraph(petri_net(reactions))
+```
+
+With this, it is possible to use the functions in LightGraphs.jl to calculate various properties of the Petri net.
+
 #### Demos
 
 This package has been used to implement the models presented in the following research papers:
