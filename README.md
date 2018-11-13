@@ -275,16 +275,19 @@ Note that in general this process isn't as simple as just equating the products 
 
 #### Inquiring Reaction Nets
 
-Given a CRN, one can find its *conservation laws*, which describe the underlying species that are conserved by all the reactions in the CRN. For instance, let's consider the enzyme example:
+Given a CRN, one can find its *conservation laws*, which describe the underlying species that are conserved by all the reactions in the CRN. The function `conservation_laws(n_species, reactions)` does this. For instance, let's consider the Michaelis-Menten example:
 
+```
+julia> conservation_laws(4, reactions)
+  1   1  0  1
+ -1  -1  1  0
+```
 
+The resulting matrix can be interpreted as follows. Each column represents a reactant, in this case S, P, E, and ES. Every row represents a conservation law. In the case of the second conservation law here, the law states that the concentration E - P - S is conserved by the system. Indeed, looking at the time evolution of the system we calculated previously, during the entire evolution of the system it stays at a constant value of -1.5. Similary for the first conservation law; it states that S + P + ES stays constant, and indeed it does, at value 2.0.
 
+Note that conservation laws are always *exact* (i.e. they have exactly integer-valued coefficients) and they are independent of reaction rate. Also, note that conservation laws do not depend on rate constants, even rate constants that are zero. This is intentional - it reflects that real-life reactions are always reversible to some degree.
 
-Similarly, one can find the *cycles* of a CRN, which are the set of reactions that, when performed in a certain order and a certain number of times, result in a *zero* change of concentration of the reactants. For example:
-
-
-
-There is far more capability in this package than merely calculating time-dynamics.
+Dual to the concept of conservation laws are the concept of *cycles*. The cycles of the CRN are the set of reactions that, when performed in a certain order and a certain number of times, result in a *zero* change of concentration of the reactants. The function `cycles(n_species, reactions)` calculates them. Just like conservation laws, cycles are exact and independent of rate constants. Cycles and conservation laws are very helpful for simplifying reaction networks.
 
 #### Petri Nets
 
