@@ -235,7 +235,31 @@ More generally, the idea of fixing the concentration of a species externally is 
 
 In this package, one can fix the concentration of a species by calling the function `chemostatted!`. This function takes a CRN as input, along with a set of species to chemostat and what concentrations to chemostat them to. It then modifies the CRN by removing all the chemostatted species, and adjusting the rate constants of the reactions they participate in so that the network dynamics are the same as before.
 
-For example:
+For example, we can consider the enzyme example from before, and chemostat the substrate concentration so that we can see the explicit steady-state dependence of the reaction rate on the substrate. We can take the reaction rate to be proportional to the steady-state concentration of ES, the enzyme-substrate complex.
+
+```julia
+rt = []
+for conc_subs = 0.01:0.01:10.0
+    reactions = [Reaction([1,3],[1,1],[4],[1],1.0,1.0,chems),
+                    Reaction([4],[1],[2,3],[1,1],1.0,1e-15,chems)]
+    chemostatted!(reactions, [1], [conc_subs])
+    ez = equilibrium_state(4,reactions)
+    ez[2]=0.0
+    ez = ez/sum(ez)
+    push!(rt, ez[4])
+end
+```
+
+Which gives the following plot:
+<!--
+	clf()
+	plot(0.01:0.01:10.0,rt)
+	xlabel("Concentration of S")
+	ylabel("Concentration of ES")
+	savefig("/tmp/example.png",dpi=200)
+
+	-->
+![example_mm](doc/example_mm.png)
 
 
 #### Quasi-Steady Simulation
@@ -248,7 +272,7 @@ Note that in general this process isn't as simple as just equating the products 
 
 #### Inquiring Reaction Nets
 
-Given a CRN, one can find its *conservation laws*, which describe the underlying species that are conserved by all the reactions in the CRN. For instance, let's consider the ammonia example:
+Given a CRN, one can find its *conservation laws*, which describe the underlying species that are conserved by all the reactions in the CRN. For instance, let's consider the enzyme example:
 
 
 
