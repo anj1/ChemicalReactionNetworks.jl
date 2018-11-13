@@ -85,20 +85,20 @@ The solution converges to a roughly equal concentration of ammonia and hydrogen,
 
 #### Michaelis-Menten Kinetics
 
-Here is a more realistic example - an example of enzyme kinetics given by the Michaelis-Menten model, which is one of the most commonly used enzyme kinetics models. Let S be a substrate, E be an enzyme, and P be a product. The enzyme catalyzes the production of P from S, as follows:
+Here is a more realistic example - an example of enzyme kinetics given by the Michaelis-Menten model, which is one of the most commonly used models of enzymatic activity. Let S be a substrate, E be an enzyme, and P be a product. The enzyme catalyzes the production of P from S, as follows:
 
 ```julia
 chems = ["S","P","E","ES"]
 reactions = [Reaction([1,3],[1,1],[4],[1],1.0,1.0,chems),
              Reaction([4],[1],[2,3],[1,1],1.0,0.0,chems)]
 ```
-With output:
+
 ```
  S + E ⇋ ES [k+:1.0 k-:1.0]
  ES → P + E [k+:1.0]   
 ```
 
-Here we have assumed a simplified model where all the reaction rates are 1. Initalizing this to substrate concentration 2, enzyme concentration 1, and product concentration 0, we have:
+Here we have assumed a simplified model where all the reaction rates are 1. Initalizing this to substrate concentration 2, enzyme concentration 1, and product concentration 0, and solving with the same `Rosenbrock23()` method, we have:
 
 <!--
 z0 = [2.0, 0.0, 0.5, 0.0]
@@ -126,7 +126,9 @@ We can also plot the substrate concentration vs. reaction rate, and we get the c
 
 #### Steady States
 
-A CRN may have a number of steady states; these are the states where `mass_action` returns zero. In CRN theory, we distinguish between different kinds of steady states. In particular, some steady states satisfy *detailed balance* conditions or *complex-balanced* conditions. Detailed balance implies that every reaction happens at the same rate in the forward and backward directions. Such steady states are called *equilibrium states*. If a CRN has an equilibrium state, it can be found by solving a linear problem; the function `equilibrium_state` does this:
+A CRN may have a number of steady states; these are the states where `mass_action` returns zero. In CRN theory, certain steady states have 'special' properties. In particular, some steady states satisfy *detailed balance* conditions or *complex-balanced* conditions. Detailed balance implies that every reaction happens at the same rate in the forward and backward directions. Complex-balance implies that every group of complexes has net zero production/consumption rate. More on this below.
+
+Steady states that satisfy detailed balance are called *equilibrium states*. If a CRN has an equilibrium state, it can be found by solving a linear problem; the function `equilibrium_state` does this:
 
 ```julia
 equilibrium_state(n_species, reactions)
@@ -152,7 +154,9 @@ julia> mass_action(reactions,ze)
  -8.881784197001252e-16 
 ```
 
-If the CRN does not have an equilibrium state, then the above function may not return anything meaningful. In such a scenario, `SteadyStateProblem` from [DifferentialEquations.jl](https://github.com/JuliaDiffEq/DifferentialEquations.jl) can be used to find a steady state by iteratively solving until converging, starting from an initial guess. To do this we wrap `mass_action` in an equation of motion function that also ensures that only positive solutions are found:
+Note that finding the equilibrium state is computationally efficient and fast, and does not require solving the ODE.
+
+If the CRN does not have an equilibrium state, then the above function may not return anything meaningful. In such a scenario, we may have to use iterative methods to find the steady state. We can use `SteadyStateProblem` from [DifferentialEquations.jl](https://github.com/JuliaDiffEq/DifferentialEquations.jl) to do this, starting from an initial guess. To do this we wrap `mass_action` in an equation of motion function that also ensures that only positive solutions are found:
 
 ```julia
 function eom(z,p,t)
@@ -211,9 +215,9 @@ Before diving into the more advanced abilities of this package, we must first de
  CH₄ → CO₂ + 2H₂O
 </p>
 
-Note that this is no longer a **physical** reaction - methane does not spontaneously produce CO₂ in the absence of oxidant. If you were to write down this reaction in a high school chemistry exam, you would probably fail. However, there is nothing stopping us from implementing this as a reaction in code, and indeed, from the code's point of view, this is just as good as any other reaction!
+Note that this is no longer a **physical** reaction - methane does not spontaneously produce CO₂ in the absence of oxidant. However, there is nothing stopping us from implementing this as a reaction in code, and indeed, from the code's point of view, this is just as good as any other reaction!
 
-Why would one do this? One situation where pseudo-reactions are useful is when describing situations where some of the reactants are so *abundant* and available (either by being present as well-mixed solvent, or being deliberately replenished or removed externally to maintain a constant concentration) that we simply model their concentration by a fixed value. In these kinds of cases, the reaction rate is thus solely determined by the other, non-hidden reactants. Note that a pseudo-reaction does not need to have any reactants at all! Thus the following:
+Why would one do this? One situation where pseudo-reactions are useful is when describing situations where some of the reactants are so *abundant* and available (either by being present as well-mixed solvent, or being deliberately replenished or removed externally to maintain a constant concentration) that we model their concentration by a fixed value, simplifying the network dynamics in the process. In these kinds of cases, the reaction rate is thus solely determined by the other, non-hidden reactants. Note that a pseudo-reaction does not need to have any reactants at all! Thus the following:
 
 <p style="text-align: center;">
 ⇋ H₂O
