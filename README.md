@@ -4,7 +4,7 @@ ChemicalReactionNetworks.jl
 [![Build Status](https://travis-ci.org/anj1/ChemicalReactionNetworks.jl.svg?branch=master)](https://travis-ci.org/anj1/ChemicalReactionNetworks.jl)
 [![Coverage Status](https://coveralls.io/repos/github/anj1/ChemicalReactionNetworks.jl/badge.svg?branch=master)](https://coveralls.io/github/anj1/ChemicalReactionNetworks.jl?branch=master)
 
-#### Introduction
+### Introduction
 
 This is a package for simulating Chemical Reaction Networks, of the kind that would be encountered in the study of complex metabolic networks, self-replication, and so on. A high-altitude overview of the capabilities of this package are:
 
@@ -13,7 +13,7 @@ This is a package for simulating Chemical Reaction Networks, of the kind that wo
 - Numerical functions: Finding equilibrium/steady states, calculating the contribution of various metabolic cycles.
 - Investigation: Identifying conserved species, identifying closed and open cycles.
 
-#### Detailed Reference
+### Detailed Reference
 
 A chemical reaction network (CRN from now on) is a list of *reactions*, each reaction having a set of *reactants* and a set of *products*, with each reactant or product being a distinct chemical species. Reactions can be either *reversible* or *irreversible*, with reversible reactions capable of happening in both directions, with a characteristic rate for either direction. An irreversible reaction can be thought of as a reversible reaction with a very small rate in the opposite direction, and in fact in this package the default way of representing reactions is that they can happen in both directions. From this viewpoint, the distinction between 'reactant' and 'product' is arbitrary and depends which direction one is considering. A detailed overview of CRN theory is beyond the scope of this document but excellent references can be found in [[1](#gun2003)] and [[2](#feinberg1979)].
 
@@ -40,7 +40,7 @@ With `k` being the forward reaction rate, and 0 being the effective reverse reac
 
 For various reasons, it is advantageous to index species by number rather than by a pointer, symbolic reference, or other kind of arbitrary reference. For example, it makes explicit the ordering used when doing various algebraic manipulations on the net, as shall be seen below.
 
-#### Time-Evolution of CRNs
+#### Time-Evolution and Mass Action
 
 Perhaps the most basic thing one might want to do with a CRN is to see how the net evolves in time -- how species are produced and consumed, and what the final concentration of species is. The function to do this is `mass_action`, and it works as follows:
 
@@ -60,7 +60,7 @@ Which gives the output:
 N₂ + 3H₂ ⇋ 2NH₃ [k+:2.0 k-:1.0]
 ```
 
-We have assumed this is happening at high temperature, so that the forward rate is only twice that of the reverse rate. Starting from a mixture of 3 parts hydrogen and 1 part nitrogen, we can evolve the concentration over time, using the `Rosenbrock23` method from [OrdinaryDiffEq.jl]():
+We have assumed this is happening at high temperature, so that the forward rate is only twice that of the reverse rate. Starting from a mixture of 3 parts hydrogen and 1 part nitrogen, we can evolve the concentration over time, using the `Rosenbrock23` method from [OrdinaryDiffEq.jl](https://github.com/JuliaDiffEq/OrdinaryDiffEq.jl):
 
 ```
 using OrdinaryDiffEq
@@ -79,14 +79,54 @@ The arrays `res.t` and `res.u` now contain the calculated timesteps and solution
 	legend(chems)
 	savefig("/tmp/example.png",dpi=200)
 -->
+![example](doc/example.png)
 
 The solution converges to a roughly equal concentration of ammonia and hydrogen, as expected.
 
-![example](doc/example.png)
+#### Michaelis-Menten Kinetics
+
+Here is a more realistic example - an example of enzyme kinetics given by the Michaelis-Menten model, which is one of the most commonly used enzyme kinetics models. Let S be a substrate, E be an enzyme, and P be a product. The enzyme catalyzes the production of P from S, as follows:
+
+```julia
+chems = ["S","P","E","ES"]
+reactions = [Reaction([1,3],[1,1],[4],[1],1.0,1.0,chems),
+             Reaction([4],[1],[2,3],[1,1],1.0,0.0,chems)]
+```
+With output:
+```
+ S + E ⇋ ES [k+:1.0 k-:1.0]
+ ES → P + E [k+:1.0]   
+```
+
+Here we have assumed a simplified model where all the reaction rates are 1. Initalizing this to substrate concentration 2, enzyme concentration 1, and product concentration 0, we have:
+
+<!--
+z0 = [2.0, 0.0, 0.5, 0.0]
+eom(z,p,t) = mass_action(reactions,z)
+res = solve(ODEProblem(eom,z0,(0.0,40.0)),alg=Rosenbrock23())
+plot(res.t,[zz[1] for zz in res.u],res.t,[zz[2] for zz in res.u],res.t,[zz[3] for zz in res.u])
+xlabel("Time (s)")
+ylabel("Concentration")
+savefig("/tmp/example.png",dpi=200)
+-->
+![example](doc/example_michaelis_t.png)
+
+We can also plot the substrate concentration vs. reaction rate, and we get the characteristic hyperbolic curve:
+<!--
+	prodc = [zz[2] for zz in res.u]
+	dprodc = prodc[2:end]-prodc[1:end-1]
+	subsc = [zz[1] for zz in res.u]
+	plot(subsc[31:end], dprodc[30:end])
+	xlabel("Substrate concentration")
+	ylabel("Reaction rate")
+	savefig("/tmp/example.png",dpi=200)
+-->
+![example](doc/example_michaelis_curv.png)
+
 
 #### Steady States
 
-A CRN may have a number of steady states; these are the states where `mass_action` returns zero. In CRN theory, we distinguish between different kinds of steady states. In particular, a steady state can satisfy *detailed balance* or *complex-balanced* conditions, or it may not satisfy these conditions. Detailed balance implies that every reaction happens at the same rate in the forward and backward directions. Such steady states are called *equilibrium states*. If a CRN has an equilibrium state, it can be found by solving a linear problem; the function `equilibrium_state` does this:
+A CRN may have a number of steady states; these are the states where `mass_action` returns zero. In CRN theory, we distinguish between different kinds of steady states. In particular, some steady states satisfy *detailed balance* conditions or *complex-balanced* conditions. Detailed balance implies that every reaction happens at the same rate in the forward and backward directions. Such steady states are called *equilibrium states*. If a CRN has an equilibrium state, it can be found by solving a linear problem; the function `equilibrium_state` does this:
 
 ```julia
 equilibrium_state(n_species, reactions)
@@ -112,7 +152,7 @@ julia> mass_action(reactions,ze)
  -8.881784197001252e-16 
 ```
 
-If the CRN does not have an equilibrium state, then the above function may not return anything meaningful. In such a scenario, `SteadyStateProblem` from DifferentialEquations.jl can be used to find a steady state by iteratively solving until converging, starting from an initial guess. To do this we wrap `mass_action` in an equation of motion function that also ensures that only positive solutions are found:
+If the CRN does not have an equilibrium state, then the above function may not return anything meaningful. In such a scenario, `SteadyStateProblem` from [DifferentialEquations.jl](https://github.com/JuliaDiffEq/DifferentialEquations.jl) can be used to find a steady state by iteratively solving until converging, starting from an initial guess. To do this we wrap `mass_action` in an equation of motion function that also ensures that only positive solutions are found:
 
 ```julia
 function eom(z,p,t)
@@ -137,7 +177,7 @@ For an example for the ammonia case above, this function returns:
 
 Which is the same as the equilibrium solution, which is what we expect since in this system the only steady state solution is the equilibrium solution.
 
-#### Catalytic System
+#### CRNS with multiple steady states
 
 Consider the simple catalytic system:
 
@@ -204,7 +244,9 @@ Note that in general this process isn't as simple as just equating the products 
 
 #### Inquiring Reaction Nets
 
-Given a CRN, one can find its *conservation laws*, which describe the underlying species that are conserved by all the reactions in the CRN. For instance, going back to the example of combustion of methane, 
+Given a CRN, one can find its *conservation laws*, which describe the underlying species that are conserved by all the reactions in the CRN. For instance, let's consider the ammonia example:
+
+
 
 
 Similarly, one can find the *cycles* of a CRN, which are the set of reactions that, when performed in a certain order and a certain number of times, result in a *zero* change of concentration of the reactants. For example:
