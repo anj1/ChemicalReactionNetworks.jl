@@ -111,8 +111,9 @@ savefig("/tmp/example.png",dpi=200)
 -->
 ![example](doc/example_michaelis_t.png)
 
-We can also plot the substrate concentration vs. reaction rate, and we get the characteristic hyperbolic curve:
 <!--
+	We can also plot the substrate concentration vs. reaction rate, and we get the characteristic hyperbolic curve:
+
 	prodc = [zz[2] for zz in res.u]
 	dprodc = prodc[2:end]-prodc[1:end-1]
 	subsc = [zz[1] for zz in res.u]
@@ -120,8 +121,10 @@ We can also plot the substrate concentration vs. reaction rate, and we get the c
 	xlabel("Substrate concentration")
 	ylabel("Reaction rate")
 	savefig("/tmp/example.png",dpi=200)
+
+	![example](doc/example_michaelis_curv.png)
+
 -->
-![example](doc/example_michaelis_curv.png)
 
 
 #### Steady States
@@ -266,9 +269,9 @@ Which gives the following plot:
 
 Some CRNs can be very complicated and include many reactions happening at different timescales. A way of simplifying the time-evolution of these CRNs is to take the reactions that happen quickly as happening *instantaneously*, so that both sides of those reactions are set to be equal, and thus those reactions (along with any species that only show up in those reactions) are eliminated. This is the *quasi-steady* simplification. This can be very useful, for instance, if the intermediate reactions involve short-lived, high-energy radicals.
 
-In ChemicalReactionNetworks, a CRN can be simplified to a quasi-steady CRN by using the function `quasi_steady`. This function takes the CRN and some reaction rate k, and eliminates all reactions that happen at rate faster than k.
+In ChemicalReactionNetworks, a CRN can be simplified to a quasi-steady CRN by using the function `quasi_steady`. This function takes the CRN and some reaction rate k, and eliminates all reactions that happen at rate faster than k, by making 
 
-Note that in general this process isn't as simple as just equating the products and reactants, as the law of mass action i
+Note that in general this process isn't as simple as just equating the products and reactants.
 
 #### Inquiring Reaction Nets
 
@@ -287,11 +290,11 @@ There is far more capability in this package than merely calculating time-dynami
 
 Any CRN can be represented in graph form. The way to do this is to assign a vertex to every species and a vertex to every reaction. There is an edge from every species vertex to every reaction vertex that it participates in. Edges are directed according to whether the species is a reactant or product. The resulting graph is called a *petri net*, and certain properties of CRNs can be computed very easily using their petri nets.
 
-The function `petri_net` produces the adjacency matrix for the Petri net of a CRN. The resulting adjacency matrix can then be input directly into, for instance, the `SimpleDiGraph` function in [LightGraphs.jl](https://github.com/JuliaGraphs/LightGraphs.jl):
+The function `petri_net` produces the adjacency matrix for the Petri net of a CRN. The resulting adjacency matrix can then be input directly into, for instance, the `SimpleDiGraph` constructor in [LightGraphs.jl](https://github.com/JuliaGraphs/LightGraphs.jl):
 
 ```julia
 using LightGraphs
-pn = SimpleDiGraph(petri_net(reactions))
+pn = SimpleDiGraph(petri_net(n_species, reactions))
 ```
 
 With this, it is possible to use the functions in LightGraphs.jl to calculate various properties of the Petri net.
