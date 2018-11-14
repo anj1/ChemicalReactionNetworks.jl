@@ -13,6 +13,38 @@ This is a package for simulating Chemical Reaction Networks, of the kind that wo
 - Numerical functions: Finding equilibrium/steady states, calculating the contribution of various metabolic cycles.
 - Investigation: Identifying conserved species, identifying closed and open cycles.
 
+#### Quick reference
+
+The main data type in this package is:
+```
+Reaction(reactant_species,
+         reactant_stoichiometric_coefficients,
+         product_species,
+         product_stoichiometric_coefficients,
+         forward_rate,
+         backward_rate,
+         display_names)
+```
+
+When the variable `reactions` is used, it usually refers to a 1-D array of `Reaction`s. A quick list of functions:
+
+```
+# Returns change in concentration over time
+mass_action(reactions, concentration)   
+# Chemostats certain species and modifies the network.
+chemostatted!(reactions, chemostatted_species, chemostatted_concentrations)   
+# Returns detailed-balance equilibrium state
+equilibrium_state(n_species, reactions)
+# Returns conservation laws of net
+conservation_laws(n_species, reactions)
+# Returns cycles
+cycles(n_species, reactions)
+# Calculates deficiency of CRN
+deficiency(n_species, reactions)
+# Decomposes a CRN in terms of a set of complexes and incidence matrix.
+complex_decomposition(n_species, reactions)
+```
+
 ### Detailed Reference
 
 A chemical reaction network (CRN from now on) is a list of *reactions*, each reaction having a set of *reactants* and a set of *products*, with each reactant or product being a distinct chemical species. Reactions can be either *reversible* or *irreversible*, with reversible reactions capable of happening in both directions, with a characteristic rate for either direction. An irreversible reaction can be thought of as a reversible reaction with a very small rate in the opposite direction, and in fact in this package the default way of representing reactions is that they can happen in both directions. From this viewpoint, the distinction between 'reactant' and 'product' is arbitrary and depends which direction one is considering. A detailed overview of CRN theory is beyond the scope of this document but excellent references can be found in [[1](#gun2003)] and [[2](#feinberg1979)].
@@ -82,6 +114,8 @@ The arrays `res.t` and `res.u` now contain the calculated timesteps and solution
 ![example](doc/example.png)
 
 The solution converges to a roughly equal concentration of ammonia and hydrogen, as expected.
+
+A quick note about solver methods for chemical reactions: It is recommended to use a *stiff* solver method, such as `Rodas4`, `Rosenbrock23`, or `TRBDF2`. Non-stiff higher-order solvers such as `DP5` are prohibitively slow for most CRNs. Check [this reference page](https://docs.juliadiffeq.org/latest/solvers/ode_solve.html) for more information on the available solvers and where to use them.
 
 #### Michaelis-Menten Kinetics
 
@@ -288,6 +322,10 @@ The resulting matrix can be interpreted as follows. Each column represents a rea
 Note that conservation laws are always *exact* (i.e. they have exactly integer-valued coefficients) and they are independent of reaction rate. Also, note that conservation laws do not depend on rate constants, even rate constants that are zero. This is intentional - it reflects that real-life reactions are always reversible to some degree.
 
 Dual to the concept of conservation laws are the concept of *cycles*. The cycles of the CRN are the set of reactions that, when performed in a certain order and a certain number of times, result in a *zero* change of concentration of the reactants. The function `cycles(n_species, reactions)` calculates them. Just like conservation laws, cycles are exact and independent of rate constants. Cycles and conservation laws are very helpful for simplifying reaction networks.
+
+#### Complexes
+
+TODO
 
 #### Petri Nets
 
