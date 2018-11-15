@@ -28,19 +28,25 @@ Reaction(reactant_species,
 
 When the variable `reactions` is used, it usually refers to a 1-D array of `Reaction`s. A quick list of functions:
 
-```
+```julia
 # Returns change in concentration over time
 mass_action(reactions, concentration)   
+
 # Chemostats certain species and modifies the network.
 chemostatted!(reactions, chemostatted_species, chemostatted_concentrations)   
+
 # Returns detailed-balance equilibrium state
 equilibrium_state(n_species, reactions)
+
 # Returns conservation laws of net
 conservation_laws(n_species, reactions)
+
 # Returns cycles
 cycles(n_species, reactions)
+
 # Calculates deficiency of CRN
 deficiency(n_species, reactions)
+
 # Decomposes a CRN in terms of a set of complexes and incidence matrix.
 complex_decomposition(n_species, reactions)
 ```
@@ -325,7 +331,15 @@ Dual to the concept of conservation laws are the concept of *cycles*. The cycles
 
 #### Complexes
 
-TODO
+As mentioned before, a complex is a set of species that enter together into a reaction, as either reactant or product. For example, the reaction A₂ + 2Z ⇋ 2AZ, A₂ + 2Z is a complex and 2AZ is a complex. Note that AZ is not a complex in this reaction, nor is A₂ + Z. If another reaction in this system such as A + Z ⇋ AZ existed, then AZ would be a complex, but AZ and 2AZ would be distinct complexes.
+
+Every reaction network can be represented in terms of its complexes, in which case the list of reactions takes on an especially simple form: every reaction has exactly one reactant complex and one product complex. This representation is useful for various manipulations of networks.
+
+In this package, the function `complex_decomposition` returns this representation, in terms of two matrices, a *composition matrix* Γ which associates species to complexes, and an *incidence matrix* ∂ which associates every reaction to a pair of complexes. These two matrices have the property that the stoichiometric matrix ∇ is equal to ∇ = Γ∂. The syntax is:
+
+```julia
+composition_mat,incidence_mat = complex_decomposition(n_species, reactions)
+```
 
 #### Petri Nets
 
