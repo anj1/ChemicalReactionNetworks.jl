@@ -36,7 +36,7 @@ function stoichiometric_matrix(n_species::Integer, reactions::Vector{Reaction})
 end
 
 # generates a list of reactions from stoichiometric matrix
-function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf::Real, kr::Real, names=[])
+function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf::Vector{T}, kr::Vector{T}, names=[]) where T<:Real
     @assert size(∇r)==size(∇p)
     nreactions = size(∇r,2)
 
