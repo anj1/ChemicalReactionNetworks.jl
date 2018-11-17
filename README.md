@@ -10,7 +10,7 @@ This is a package for simulating Chemical Reaction Networks, of the kind that wo
 
 - Basic functions: Specifying reaction networks and solving their time-evolution via mass-action kinetics.
 - Reaction network manipulation: Adding external sources or sinks for chemicals, grouping species in terms of chemical complexes.
-- Numerical functions: Finding equilibrium/steady states, calculating the contribution of various metabolic cycles.
+- Numerical functions: Finding equilibrium/steady states, calculating the contribution of various metabolic cycles, characterizing exponential growth.
 - Investigation: Identifying conserved species, identifying closed and open cycles.
 
 #### Quick reference
@@ -304,6 +304,37 @@ Which gives the following plot:
 	-->
 ![example_mm](doc/example_mm.png)
 
+#### Exponential Growth
+
+In modeling networks that have phenomena like autocatalytic cycles, it is of interest to be able to study the onset and exponential growth of certain species. Exponential growth is a non-steady, non-equilibrium, transient phenomenon and so it cannot be studied using steady state methods.
+
+An important function that can be used to study exponential growth is the `jacobian` function:
+
+```julia
+const_vector,jacobian_matrix=jacobian(n_species,reactions)
+```
+
+The two arrays that this matrix returns, the Jacobian matrix J and the constant vector c, capture the first-order dynamics of the network, such that:
+
+dZ = c + JZ + ... (higher order terms)
+
+Where Z is the concentration vector and dZ is the change in the concentration vector over time. If the reaction net is *linear*, such that every reaction has a maximum of one (non-hidden) reactant, and one product, then all higher-order terms are zero, and this equation fully captures the dynamics of the net. In such a situation, properties like exponential or sub-exponential growth can be read directly off of the eigenvalues of the Jacobian. Even in nets that do not have this property, at certain points during the net's evolution the property may be satisfied. It is also possible that the exponential growth happens over such a small timescale that the contribution from higher-order terms is very small and can be ignored.
+
+<!--
+For an example, consider the net:
+
+ A + B ⇋ B + C
+     C ⇋ B
+
+In the first reaction, B catalyzes the production of C from A. In the second, B is converted to C. Let us assume that we have chemostatted the fuel (A), then:
+
+```julia
+chems = ["A","B","C"]
+reactions = [Reaction([1,2],[1,1],[2,3],[1,1],1.0,1.0,chems),
+             Reaction([3],[1],[2],[1],1.0,1.0,chems)]
+
+```
+-->
 
 #### Quasi-Steady Simulation
 
