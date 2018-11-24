@@ -93,7 +93,7 @@ function Base.show(io::IO, r::Reaction)
     print(io, "]")
 end 
 
-function concentration_currents(ri::Reaction, z)
+function reaction_current(ri::Reaction, z)
     jf = ri.kf
     for si = 1 : length(ri.reactants)
         s = ri.reactants[si]
@@ -114,7 +114,7 @@ function concentration_currents(ri::Reaction, z)
 end 
 
 function mass_action!(dz, ri::Reaction, z)
-    jf,jr = concentration_currents(ri, z)
+    jf,jr = reaction_current(ri, z)
     j=jf-jr
 
     # calculate change in concentration

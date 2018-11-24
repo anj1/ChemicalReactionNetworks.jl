@@ -170,7 +170,7 @@ function cycle_affinities(n_species::Integer, reactions::Vector{Reaction}, cycm:
     lnj = zeros(length(reactions))
     for rho = 1:length(reactions)
         ri = reactions[rho]
-        jf,jr = concentration_currents(ri, z)
+        jf,jr = reaction_currents(ri, z)
         lnj[rho] = log(jf/jr)
     end 
 
