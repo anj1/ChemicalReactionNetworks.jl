@@ -312,7 +312,7 @@ A very useful application of CRNs is investigating catalysis and autocatalysis. 
 
 The function `reaction_currents(reaction, z)` returns a pair of numbers `jf` and `jr` - representing the forward and backward rate of a particular reaction *after* applying the mass-action rule. These are also called the *propensities*. The difference of these two numbers is called the *net current* or *current* of the reaction, and represents the net production or consumption of species by this reaction (in detailed balance, the concentration current of every reaction is zero).
 
-The forward (backward) *specificity* of a reaction is the propensity of the reaction divided by the sum of the (forward) propensities of all the reactions that share at least one reactant (product) species. The function to compute this is `specificity(reactions, z)`, which computes the forward and backward propensities of all the reactions and returns two arrays.
+The forward (backward) *specificity* of a reaction is the propensity of the reaction divided by the sum of the (forward) propensities of all the reactions that share at least one reactant (product) species. The function to compute this is `specificity(n_species, reactions, z)`, which computes the forward and backward specificities of all the reactions and returns an n_reactions×2 array.
 
 #### Exponential Growth
 

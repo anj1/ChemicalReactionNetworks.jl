@@ -161,3 +161,20 @@ function cycle_affinities(n_species::Integer, reactions::Vector{Reaction}, cycm:
 
     return lnj'*cycm
 end
+
+function specificity(n_species::Integer, reactions::Vector{Reaction}, z)
+    # remember: r is reactants, p is products
+    ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
+    ∇rp = cat(dims=2, ∇r, ∇p)
+
+    cur = [reaction_current(r, z) for r in reactions]
+
+    # Concatenate forward/backward currents,
+    # with order corresponding to ∇rp
+    curfr = cat(dims=1,[c[1] for c in cur],[c[2] for c in cur])
+
+    sumcur = ∇rp'*(∇rp*curfr)
+    spec = curfr ./ sumcur 
+
+    return reshape(spec, length(reactions), 2)
+end    
