@@ -12,7 +12,6 @@ export rand_concentrations
 export chemostatted!,relabel!
 export complexes,complex_decomposition,deficiency,complex_concentration
 export equilibrium_state,equilibrium_state_space,cycle_affinities
-export steady_state
 export complex_basis_reactions
 export free_energies,reaction_rates
 export petri_net 

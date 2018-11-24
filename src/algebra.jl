@@ -133,21 +133,6 @@ function equilibrium_state(n_species::Integer, reactions::Vector{Reaction}) #, z
     return exp.(logz)
 end
 
-# Note: if net doesn't have equilibrium state, then above functions
-# will not return a steady state.
-# This function however will always return a steady state
-function steady_state(n_species::Integer, reactions::Vector{Reaction})
-    
-    z0 = equilibrium_state(n_species, reactions)
-
-# todo: termination criteria
-    for i=1:10000 
-       z0 += 0.005*mass_action(reactions, z0)
-    end
-
-    return z0
-end 
-
 # The equilibrium state is often under-defined;
 # this means we can add chemostats until it is fully defined,
 # and get a unique solution.
