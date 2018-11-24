@@ -263,3 +263,21 @@ function eom(z,p,t)
     return dz
 end
 # ssz=solve(SteadyStateProblem(f, equilibrium_state(6, reactions)))
+
+
+# ---------------------------------
+# Test specificity
+
+n_species = 4 
+
+reactions = [Reaction([1],[1],[2],[1],1.0,1.0,chems),
+             Reaction([1],[1],[4],[1],1.0,1.0,chems)]
+spmat = [0.5 1.0
+         0.5 1.0]
+isapprox(specificity(n_species, reactions, rand(n_species)), spmat)
+
+reactions = [Reaction([1],[1],[2],[1],1.0,1.0,chems),
+             Reaction([1],[1],[4],[1],0.0,1.0,chems)]
+spmat = [1.0 1.0
+         0.0 1.0]
+isapprox(specificity(n_species, reactions, rand(n_species)), spmat)
