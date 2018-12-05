@@ -31,7 +31,10 @@ end
 # composition matrix has dimensions n_species, n_complexes.
 # incidence matrix has dimensionality n_complex, n_reactions,
 # the entries indicate if a complex is the reactant or product
-function complex_decomposition(n_species::Integer,reactions::Vector{Reaction})
+function complex_decomposition(rn::ReactionNetwork)
+    n_species = rn.n_species 
+    reactions = rn.reactions 
+
     c = SpeciesComplex[]
     inc_mat = spzeros(Int64,2*length(reactions),length(reactions))  # we can have at most 2*rho complexes
     n_complex = 0
@@ -72,10 +75,10 @@ function complex_decomposition(n_species::Integer,reactions::Vector{Reaction})
 end 
 
 # Compute deficiency of reaction network
-function deficiency(n_species::Integer, reactions::Vector{Reaction})
-    comp_mat, inc_mat = complex_decomposition(n_species,reactions)
+function deficiency(rn::ReactionNetwork)
+    comp_mat, inc_mat = complex_decomposition(rn)
 
-    return n_cycles(n_species,reactions) - (size(inc_mat,2)-rank(full(inc_mat)))
+    return n_cycles(rn) - (size(inc_mat,2)-rank(full(inc_mat)))
 end
 
 # Take the species concentration vector,

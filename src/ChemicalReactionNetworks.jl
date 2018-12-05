@@ -1,6 +1,7 @@
 module ChemicalReactionNetworks
 
 export Reaction
+export ReactionNetwork
 export SpeciesComplex
 
 export ==,hash,isredundant

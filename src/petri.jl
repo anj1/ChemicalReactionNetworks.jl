@@ -3,7 +3,10 @@
 using SparseArrays
 
 # The adjacency matrix that is returned has dimensions (n_species + n_reactions)^2
-function petri_net(n_species::Integer,reactions::Vector{Reaction})
+function petri_net(rn::ReactionNetwork)
+	n_species = rn.n_species 
+	reactions = rn.reactions 
+	
 	n_reactions = length(reactions)
 
 	n = n_species + n_reactions

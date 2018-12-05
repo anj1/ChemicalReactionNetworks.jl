@@ -2,9 +2,7 @@ free_energies(chem_potentials::AbstractVector, stoich_matrix::AbstractMatrix) =
     vec(chem_potentials'*stoich_matrix)
 
 function free_energies(chem_potentials::AbstractVector, reactions::Vector{Reaction})
-    n_species = length(chem_potentials)
-
-    ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
+    ∇r, ∇p = stoichiometric_matrix(ReactionNetwork(reactions))
 
     return free_energies(chem_potentials, ∇r - ∇p)
 end

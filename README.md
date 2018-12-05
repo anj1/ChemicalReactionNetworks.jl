@@ -26,7 +26,13 @@ Reaction(reactant_species,
          display_names)
 ```
 
-When the variable `reactions` is used, it usually refers to a 1-D array of `Reaction`s. A quick list of functions:
+When the variable `reactions` is used, it usually refers to a 1-D array of `Reaction`s. A group of reactions can be bundled into a reaction network, where we also specify the total number of species and (optionally) their names:
+
+```
+ReactionNetwork(reactions::Vector{Reaction},
+                names)  # names optional
+```
+A quick list of functions:
 
 ```julia
 # Returns change in concentration over time
@@ -36,19 +42,19 @@ mass_action(reactions, concentration)
 chemostatted!(reactions, chemostatted_species, chemostatted_concentrations)   
 
 # Returns detailed-balance equilibrium state
-equilibrium_state(n_species, reactions)
+equilibrium_state(reaction_net)
 
 # Returns conservation laws of net
-conservation_laws(n_species, reactions)
+conservation_laws(reaction_net)
 
 # Returns cycles
-cycles(n_species, reactions)
+cycles(reaction_net)
 
 # Calculates deficiency of CRN
-deficiency(n_species, reactions)
+deficiency(reaction_net)
 
 # Decomposes a CRN in terms of a set of complexes and incidence matrix.
-complex_decomposition(n_species, reactions)
+complex_decomposition(reaction_net)
 ```
 
 ### Detailed Reference
@@ -174,13 +180,13 @@ A CRN may have a number of steady states; these are the states where `mass_actio
 Steady states that satisfy detailed balance are called *equilibrium states*. If a CRN has an equilibrium state, it can be found by solving a linear problem; the function `equilibrium_state` does this:
 
 ```julia
-equilibrium_state(n_species, reactions)
+equilibrium_state(reaction_net)
 ```
 
 For the ammonia example above, this function returns:
 
 ```julia
-julia> ze=equilibrium_state(3,reactions)
+julia> ze=equilibrium_state(ReactionNetwork(reactions))
 3-element Array{Float64,1}:
  0.9516951530106196
  0.8619728212469777
@@ -233,10 +239,10 @@ chems = ["A₂","B","AB","Z","AZ","BZ"]
 reactions = [Reaction([1,4],[1,2],[5],[2],1.0,1.0,chems),
              Reaction([2,4],[1,1],[6],[1],1.0,1.0,chems),
              Reaction([5,6],[1,1],[3,4],[1,2],1.0,0.0,chems)]
-@show reactions
+@show ReactionNetwork(reactions, chems)
 ```
 ```
-3-element Array{Reaction,1}:
+Reaction Network:
  A₂ + 2Z ⇋ 2AZ [k+:1.0 k-:1.0]
  B + Z ⇋ BZ [k+:1.0 k-:1.0]   
  AZ + BZ → AB + 2Z [k+:1.0]   
@@ -286,7 +292,7 @@ for conc_subs = 0.01:0.01:10.0
     reactions = [Reaction([1,3],[1,1],[4],[1],1.0,1.0,chems),
                     Reaction([4],[1],[2,3],[1,1],1.0,1e-15,chems)]
     chemostatted!(reactions, [1], [conc_subs])
-    ez = equilibrium_state(4,reactions)
+    ez = equilibrium_state(ReactionNetwork(reactions))
     ez[2]=0.0
     ez = ez/sum(ez)
     push!(rt, ez[4])
@@ -312,7 +318,7 @@ A very useful application of CRNs is investigating catalysis and autocatalysis. 
 
 The function `reaction_currents(reaction, z)` returns a pair of numbers `jf` and `jr` - representing the forward and backward rate of a particular reaction *after* applying the mass-action rule. These are also called the *propensities*. The difference of these two numbers is called the *net current* or *current* of the reaction, and represents the net production or consumption of species by this reaction (in detailed balance, the concentration current of every reaction is zero).
 
-The forward (backward) *specificity* of a reaction is the propensity of the reaction divided by the sum of the (forward) propensities of all the reactions that share at least one reactant (product) species. The function to compute this is `specificity(n_species, reactions, z)`, which computes the forward and backward specificities of all the reactions and returns an n_reactions×2 array.
+The forward (backward) *specificity* of a reaction is the propensity of the reaction divided by the sum of the (forward) propensities of all the reactions that share at least one reactant (product) species. The function to compute this is `specificity(reaction_net, z)`, which computes the forward and backward specificities of all the reactions and returns an n_reactions×2 array.
 
 #### Exponential Growth
 
@@ -321,7 +327,7 @@ In modeling networks that have phenomena like autocatalytic cycles, it is of int
 An important function that can be used to study exponential growth is the `jacobian` function:
 
 ```julia
-const_vector,jacobian_matrix=jacobian(n_species,reactions)
+const_vector,jacobian_matrix=jacobian(reaction_net)
 ```
 
 The two arrays that this matrix returns, the Jacobian matrix J and the constant vector c, capture the first-order dynamics of the network, such that:
@@ -340,8 +346,8 @@ In the first reaction, B catalyzes the production of C from A. In the second, B 
 
 ```julia
 chems = ["A","B","C"]
-reactions = [Reaction([1,2],[1,1],[2,3],[1,1],1.0,1.0,chems),
-             Reaction([3],[1],[2],[1],1.0,1.0,chems)]
+reactions = [Reaction([1,2],[1,1],[2,3],[1,1],1.0,1.0),
+             Reaction([3],[1],[2],[1],1.0,1.0)]
 
 ```
 -->
@@ -359,7 +365,7 @@ Note that in general this process isn't as simple as just equating the products 
 Given a CRN, one can find its *conservation laws*, which describe the underlying species that are conserved by all the reactions in the CRN. The function `conservation_laws(n_species, reactions)` does this. For instance, let's consider the Michaelis-Menten example:
 
 ```
-julia> conservation_laws(4, reactions)
+julia> conservation_laws(ReactionNetwork(reactions))
   1   1  0  1
  -1  -1  1  0
 ```
@@ -368,7 +374,7 @@ The resulting matrix can be interpreted as follows. Each column represents a rea
 
 Note that conservation laws are always *exact* (i.e. they have exactly integer-valued coefficients) and they are independent of reaction rate. Also, note that conservation laws do not depend on rate constants, even rate constants that are zero. This is intentional - it reflects that real-life reactions are always reversible to some degree.
 
-Dual to the concept of conservation laws are the concept of *cycles*. The cycles of the CRN are the set of reactions that, when performed in a certain order and a certain number of times, result in a *zero* change of concentration of the reactants. The function `cycles(n_species, reactions)` calculates them. Just like conservation laws, cycles are exact and independent of rate constants. Cycles and conservation laws are very helpful for simplifying reaction networks.
+Dual to the concept of conservation laws are the concept of *cycles*. The cycles of the CRN are the set of reactions that, when performed in a certain order and a certain number of times, result in a *zero* change of concentration of the reactants. The function `cycles(reaction_net)` calculates them. Just like conservation laws, cycles are exact and independent of rate constants. Cycles and conservation laws are very helpful for simplifying reaction networks.
 
 #### Complexes
 
@@ -379,7 +385,7 @@ Every reaction network can be represented in terms of its complexes, in which ca
 In this package, the function `complex_decomposition` returns this representation, in terms of two matrices, a *composition matrix* Γ which associates species to complexes, and an *incidence matrix* ∂ which associates every reaction to a pair of complexes. These two matrices have the property that the stoichiometric matrix ∇ is equal to ∇ = Γ∂. The syntax is:
 
 ```julia
-composition_mat,incidence_mat = complex_decomposition(n_species, reactions)
+composition_mat,incidence_mat = complex_decomposition(reaction_net)
 ```
 
 #### Petri Nets
@@ -390,7 +396,7 @@ The function `petri_net` produces the adjacency matrix for the Petri net of a CR
 
 ```julia
 using LightGraphs
-pn = SimpleDiGraph(petri_net(n_species, reactions))
+pn = SimpleDiGraph(petri_net(ReactionNetwork(reactions)))
 ```
 
 With this, it is possible to use the functions in LightGraphs.jl to calculate various properties of the Petri net.

@@ -9,7 +9,10 @@ full(a) = convert(Array,a)
 # generate stoichiometric matrices from list of reactions.
 # matrices: (nspecies,nreactions)
 # returns two matrices: reactants and products
-function stoichiometric_matrix(n_species::Integer, reactions::Vector{Reaction})
+function stoichiometric_matrix(rn::ReactionNetwork)
+    n_species = rn.n_species 
+    reactions = rn.reactions 
+
     nr = length(reactions)
 
     ∇r = spzeros(Int, n_species, nr)
@@ -48,23 +51,23 @@ function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, 
         push!(reactions, Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i],nm))
     end
 
-    return reactions
+    return ReactionNetwork(size(∇r,1),reactions,names)
 end
 
 # return normal form of reaction net
 # for example, S1 + S1 -> S2 becomes 2S1 -> S2
 # and S3 + S1 -> S2 becomes S1 + S3 -> S2
-function normal_form(n_species::Integer, reactions::Vector{Reaction})
-    ∇r,∇p = stoichiometric_matrix(n_species, reactions)
-    kf = [r.kf for r in reactions]
-    kr = [r.kr for r in reactions]
-    nm = [r.names for r in reactions]
+function normal_form(rn::ReactionNetwork)
+    ∇r,∇p = stoichiometric_matrix(rn)
+    kf = [r.kf for r in rn.reactions]
+    kr = [r.kr for r in rn.reactions]
+    nm = [r.names for r in rn.reactions]
     return from_stoichiometric_matrix(∇r,∇p,kf,kr,nm)
 end 
 
-function stoichiometric_nullspace(n_species::Integer, reactions::Vector{Reaction}, tr::Bool)
+function stoichiometric_nullspace(rn::ReactionNetwork, tr::Bool)
     # We only want net stoichiometric matrix here.
-    ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
+    ∇r, ∇p = stoichiometric_matrix(rn)
     ∇ = ∇r - ∇p
 
     ∇ = tr ? transpose(∇) : ∇
@@ -81,8 +84,8 @@ end
 
 # returns dimensions of nullspace (dimension of kernel) without calculating
 # the matrix explicitly. Used for 
-function stoichiometric_dimker(n_species::Integer, reactions::Vector{Reaction}, tr::Bool)
-    ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
+function stoichiometric_dimker(rn::ReactionNetwork, tr::Bool)
+    ∇r, ∇p = stoichiometric_matrix(rn)
     ∇ = ∇r - ∇p
 
     ∇ = tr ? transpose(∇) : ∇
@@ -90,17 +93,17 @@ function stoichiometric_dimker(n_species::Integer, reactions::Vector{Reaction}, 
     return size(∇,2)-rank(full(∇))
 end
 
-conservation_laws(n_species::Integer, reactions::Vector{Reaction}) = 
-    stoichiometric_nullspace(n_species, reactions, true)
+conservation_laws(rn::ReactionNetwork) = 
+    stoichiometric_nullspace(rn, true)
 
-n_conservation_laws(n_species::Integer, reactions::Vector{Reaction}) = 
-    stoichiometric_dimker(n_species, reactions, true)
+n_conservation_laws(rn::ReactionNetwork) = 
+    stoichiometric_dimker(rn, true)
 
-cycles(n_species::Integer, reactions::Vector{Reaction}) =
-    stoichiometric_nullspace(n_species, reactions, false)
+cycles(rn::ReactionNetwork) =
+    stoichiometric_nullspace(rn, false)
 
-n_cycles(n_species::Integer, reactions::Vector{Reaction}) = 
-    stoichiometric_dimker(n_species, reactions, false)
+n_cycles(rn::ReactionNetwork) = 
+    stoichiometric_dimker(rn, false)
 
 # Compute steady-states for both detailed-balanced 
 # And complex-balanced states.
@@ -117,19 +120,19 @@ n_cycles(n_species::Integer, reactions::Vector{Reaction}) =
 #   log(kf/kr) = sum del_s,r log z[s]
 # And then we also append the conservation laws.
 # This gives a linear system which can be solved.
-function log_equilibrium_state(n_species::Integer, reactions::Vector{Reaction})
+function log_equilibrium_state(rn::ReactionNetwork)
      # compute ratio of forward to backward reactions
-    free_energy = log.([r.kf/r.kr for r in reactions])
+    free_energy = log.([r.kf/r.kr for r in rn.reactions])
 
-    dp,dn = stoichiometric_matrix(n_species,reactions)
+    dp,dn = stoichiometric_matrix(rn)
     del = dn-dp
 
     logz = full(del')\free_energy
 
     return logz, del    
 end 
-function equilibrium_state(n_species::Integer, reactions::Vector{Reaction}) #, z0)
-    logz, del = log_equilibrium_state(n_species, reactions)
+function equilibrium_state(rn::ReactionNetwork)
+    logz, del = log_equilibrium_state(rn)
     return exp.(logz)
 end
 
@@ -141,20 +144,20 @@ end
 # Thus every solution can be written as:
 # ss*x + logz0
 # where x is some arbitrary vector and logz0=full(del')\log_k_ratio
-function equilibrium_state_space(n_species::Integer, reactions::Vector{Reaction})
-    logz, del = log_equilibrium_state(n_species, reactions)
+function equilibrium_state_space(rn::ReactionNetwork)
+    logz, del = log_equilibrium_state(rn)
 
     r,ss = nullspace(full(del'))
     return ss, logz
 end
 
 # -----------
-function cycle_affinities(n_species::Integer, reactions::Vector{Reaction}, cycm::AbstractMatrix, z)
+function cycle_affinities(rn::ReactionNetwork, cycm::AbstractMatrix, z)
     cycaff = zeros(size(cycm,2))
 
-    lnj = zeros(length(reactions))
-    for rho = 1:length(reactions)
-        ri = reactions[rho]
+    lnj = zeros(length(rn.reactions))
+    for rho = 1:length(rn.reactions)
+        ri = rn.reactions[rho]
         jf,jr = reaction_currents(ri, z)
         lnj[rho] = log(jf/jr)
     end 
@@ -162,12 +165,12 @@ function cycle_affinities(n_species::Integer, reactions::Vector{Reaction}, cycm:
     return lnj'*cycm
 end
 
-function specificity(n_species::Integer, reactions::Vector{Reaction}, z)
+function specificity(rn::ReactionNetwork, z)
     # remember: r is reactants, p is products
-    ∇r, ∇p = stoichiometric_matrix(n_species, reactions)
+    ∇r, ∇p = stoichiometric_matrix(rn)
     ∇rp = cat(dims=2, ∇r, ∇p)
 
-    cur = [reaction_current(r, z) for r in reactions]
+    cur = [reaction_current(r, z) for r in rn.reactions]
 
     # Concatenate forward/backward currents,
     # with order corresponding to ∇rp
@@ -176,5 +179,5 @@ function specificity(n_species::Integer, reactions::Vector{Reaction}, z)
     sumcur = ∇rp'*(∇rp*curfr)
     spec = curfr ./ sumcur 
 
-    return reshape(spec, length(reactions), 2)
+    return reshape(spec, length(rn.reactions), 2)
 end    

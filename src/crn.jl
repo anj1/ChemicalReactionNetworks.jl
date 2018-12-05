@@ -21,12 +21,31 @@ mutable struct Reaction
     stoichp::IntVec   # vector of stoichiometric coefficients of products
     kf::Number        # rate constant, forward. Zero means no forward reaction.
     kr::Number        # rate constant, backward. Zero means no backward reaction.
-    names::StrVec     # Array of names of reactants. Can be empty.
 end
 
-Reaction(a,b,c,d,kf,kr) = Reaction(a,b,c,d,kf,kr,String[])
+#Reaction(a,b,c,d,kf,kr) = Reaction(a,b,c,d,kf,kr,String[])
 
-function Base.show(io::IO, r::Reaction)
+struct ReactionNetwork 
+    n_species::Integer 
+    reactions::Vector{Reaction}
+    names::StrVec 
+end 
+
+ReactionNetwork(ns::Integer,r::Vector{Reaction},names=String[]) = 
+    ReactionNetwork(ns,r,names)
+
+ReactionNetwork(r::Vector{Reaction},names=String[]) = 
+    ReactionNetwork(get_nspecies(r),r,names)
+
+function get_nspecies(reactions::Vector{Reaction})
+    ns = 0 
+    for r in reactions
+        ns = maximum(cat(dims=1,ns,r.reactants,r.products))
+    end 
+    return ns 
+end
+
+function Base.show(io::IO, r::Reaction, names=String[])
     if (r.kf == 0.0) && (r.kr == 0.0)
         print(io, "[Non-reaction]")
         return
@@ -38,10 +57,10 @@ function Base.show(io::IO, r::Reaction)
 
         cstr = c == 1 ? "" : "$c"
 
-        if isempty(r.names)
+        if isempty(names)
             print(io, "$cstr(S$s) ")
         else
-            nm = r.names[s]
+            nm = names[s]
             print(io, "$cstr$nm ")
         end 
         if si == length(r.reactants)
@@ -66,10 +85,10 @@ function Base.show(io::IO, r::Reaction)
 
         cstr = c == 1 ? "" : "$c"
 
-        if isempty(r.names)
+        if isempty(names)
             print(io, "$cstr(S$s) ")
         else
-            nm = r.names[s]
+            nm = names[s]
             print(io, "$cstr$nm ")
         end 
         if si == length(r.products)
@@ -91,6 +110,14 @@ function Base.show(io::IO, r::Reaction)
         print(io, "k-:$kr")
     end 
     print(io, "]")
+end 
+
+function Base.show(io::IO, rn::ReactionNetwork)
+    println(io, "Reaction Network: ")
+    for r in rn.reactions 
+        show(io, r, rn.names)
+        println(io)
+    end
 end 
 
 function reaction_current(ri::Reaction, z)
