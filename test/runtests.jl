@@ -275,3 +275,12 @@ reactions = [Reaction([1],[1],[2],[1],1.0,1.0),
 spmat = [1.0 1.0
          0.0 1.0]
 isapprox(specificity(ReactionNetwork(reactions), rand(n_species)), spmat)
+
+# ----------------------------------
+# Test normal form
+reactions = [Reaction([1,1],[1,2],[3],[1],1.0,1.0),
+             Reaction([1],[2],[4],[1],1.0,1.0)]
+
+rnf = normal_form(ReactionNetwork(reactions))
+
+@assert Reaction([1],[3],[3],[1],1.0,1.0) == rnf.reactions[1]

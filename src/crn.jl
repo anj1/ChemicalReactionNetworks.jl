@@ -185,15 +185,15 @@ function mass_action(reactions::Vector{Reaction}, z)
     return dz 
 end
 
-function jacobian(n_species::Integer,reactions::Vector{Reaction})
-    jm = zeros(n_species,n_species)
+function jacobian(rn::ReactionNetwork)
+    jm = zeros(rn.n_species,rn.n_species)
 
-    cm = mass_action(reactions,zeros(n_species))
+    cm = mass_action(rn.reactions,zeros(rn.n_species))
 
-    for i=1:n_species
-        z = zeros(n_species)
+    for i=1:rn.n_species
+        z = zeros(rn.n_species)
         z[i]=1.0
-        jm[:,i] = mass_action(reactions,z)
+        jm[:,i] = mass_action(rn.reactions,z)
     end
 
     return cm,jm

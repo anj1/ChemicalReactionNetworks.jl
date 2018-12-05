@@ -38,6 +38,11 @@ function stoichiometric_matrix(rn::ReactionNetwork)
     return ∇r,∇p
 end
 
+function findnz(l::AbstractVector)
+    idx = findall(x->x!=0,l)
+    return idx,l[idx]
+end 
+
 # generates a list of reactions from stoichiometric matrix
 function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf::Vector{T}, kr::Vector{T}, names=[]) where T<:Real
     @assert size(∇r)==size(∇p)
@@ -47,8 +52,7 @@ function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, 
     for i = 1 : nreactions
         reactants,stoichr = findnz(∇r[:,i])
         products,stoichp  = findnz(∇p[:,i])
-        nm = isempty(names) ? [] : names[i]
-        push!(reactions, Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i],nm))
+        push!(reactions, Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i]))
     end
 
     return ReactionNetwork(size(∇r,1),reactions,names)
@@ -61,10 +65,10 @@ function normal_form(rn::ReactionNetwork)
     ∇r,∇p = stoichiometric_matrix(rn)
     kf = [r.kf for r in rn.reactions]
     kr = [r.kr for r in rn.reactions]
-    nm = [r.names for r in rn.reactions]
-    return from_stoichiometric_matrix(∇r,∇p,kf,kr,nm)
+    return from_stoichiometric_matrix(∇r,∇p,kf,kr,rn.names)
 end 
 
+# TODO: Bool arguments are a code smell
 function stoichiometric_nullspace(rn::ReactionNetwork, tr::Bool)
     # We only want net stoichiometric matrix here.
     ∇r, ∇p = stoichiometric_matrix(rn)
