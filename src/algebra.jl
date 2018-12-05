@@ -46,7 +46,7 @@ end
 # generates a list of reactions from stoichiometric matrix
 function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf::Vector{T}, kr::Vector{T}, names=[]) where T<:Real
     @assert size(∇r)==size(∇p)
-    nreactions = size(∇r,2)
+    nspecies,nreactions = size(∇r)
 
     reactions = Reaction[]
     for i = 1 : nreactions
@@ -55,7 +55,7 @@ function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, 
         push!(reactions, Reaction(reactants,stoichr,products,stoichp,kf[i],kr[i]))
     end
 
-    return ReactionNetwork(size(∇r,1),reactions,names)
+    return ReactionNetwork(nspecies,reactions,names)
 end
 
 # return normal form of reaction net

@@ -1,16 +1,6 @@
 # Code for working with complexes,
 # and complex-balanced systems
 
-#=
-immutable SpeciesComplex 
-    spec    # vector of species
-    stoich  # vector of stoichiometric coefficients of species
-end 
-=#
-
-#Base.isequal(a::SpeciesComplex,b::SpeciesComplex) = isequal(a.spec,b.spec) && isequal(a.stoich,b.stoich)
-#Base.hash(a::SpeciesComplex) = hash([hash(a.spec),hash(a.stoich)])
-
 # (species,stoichiometric coefficients)
 const SpeciesComplex = Tuple{IntVec,IntVec}
 
@@ -101,9 +91,3 @@ function complex_basis_reactions(reactions::Unsigned, incidence_matrix)
     end 
     return r
 end 
-
-# The inverse of the above; determine species concentrations
-# from complex concentrations.
-# Because this can be an overdefined problem in general,
-# We use 
-#species_concentration(y, composition_matrix) = 

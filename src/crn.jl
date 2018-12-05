@@ -23,8 +23,6 @@ mutable struct Reaction
     kr::Number        # rate constant, backward. Zero means no backward reaction.
 end
 
-#Reaction(a,b,c,d,kf,kr) = Reaction(a,b,c,d,kf,kr,String[])
-
 struct ReactionNetwork 
     n_species::Integer 
     reactions::Vector{Reaction}
@@ -45,71 +43,54 @@ function get_nspecies(reactions::Vector{Reaction})
     return ns 
 end
 
+function show_reactants(io::IO, reactants::IntVec, stoich::IntVec, names::StrVec)
+    for si in 1:length(reactants)
+        s = reactants[si]
+        c = stoich[si]
+
+        cstr = c == 1 ? "" : "$c"
+
+        if isempty(names)
+            print(io, "$cstr(S$s) ")
+        else
+            nm = names[s]
+            print(io, "$cstr$nm ")
+        end 
+
+        if si != length(reactants)
+            print(io, "+ ")
+        end 
+    end 
+end 
+
 function Base.show(io::IO, r::Reaction, names=String[])
-    if (r.kf == 0.0) && (r.kr == 0.0)
-        print(io, "[Non-reaction]")
-        return
-    end 
-
-    for si in 1:length(r.reactants)
-        s = r.reactants[si]
-        c = r.stoichr[si]
-
-        cstr = c == 1 ? "" : "$c"
-
-        if isempty(names)
-            print(io, "$cstr(S$s) ")
+    eq_sym = ""
+    k_str = ""
+    if r.kf == 0 
+        if r.kr == 0 
+            print(io, "[Non-reaction]")
+            return 
         else
-            nm = names[s]
-            print(io, "$cstr$nm ")
+            k_str = "[k-:$(r.kr)]"
+            eq_sym = "← "
         end 
-        if si == length(r.reactants)
-            break
+    else 
+        if r.kr == 0 
+            k_str = "[k+:$(r.kf)]"
+            eq_sym = "→ "
+        else 
+            k_str = "[k+:$(r.kf) k-:$(r.kr)]"
+            eq_sym = "⇋ "
         end 
-        print(io, "+ ")
     end 
 
-    if ((r.kf != 0.0) && (r.kr != 0.0))
-        print(io,"⇋ ")
-    end 
-    if (r.kr == 0.0) && (r.kf != 0.0)
-        print(io,"→ ")
-    end
-    if (r.kf == 0.0) && (r.kr != 0.0)
-        print(io,"← ")
-    end
+    show_reactants(io, r.reactants, r.stoichr, names)
 
-    for si in 1:length(r.products)
-        s = r.products[si]
-        c = r.stoichp[si]
+    print(io, eq_sym)
 
-        cstr = c == 1 ? "" : "$c"
+    show_reactants(io, r.products, r.stoichp, names)
 
-        if isempty(names)
-            print(io, "$cstr(S$s) ")
-        else
-            nm = names[s]
-            print(io, "$cstr$nm ")
-        end 
-        if si == length(r.products)
-            break
-        end 
-        print(io, "+ ")
-    end 
-
-    kf = r.kf
-    kr = r.kr
-    print(io, "[")
-    if kf != 0.0
-        print(io, "k+:$kf")
-    end
-    if kr != 0.0
-        if kf != 0.0
-            print(io, " ")
-        end
-        print(io, "k-:$kr")
-    end 
-    print(io, "]")
+    print(io, k_str)
 end 
 
 function Base.show(io::IO, rn::ReactionNetwork)
@@ -120,23 +101,22 @@ function Base.show(io::IO, rn::ReactionNetwork)
     end
 end 
 
+function reaction_current_1side(reactants::IntVec, stoich::IntVec, z)
+    j = 1
+
+    for si = 1 : length(reactants)
+        s = reactants[si]
+        c = stoich[si]
+
+        j *= z[s] ^ c 
+    end
+
+    return j 
+end 
+
 function reaction_current(ri::Reaction, z)
-    jf = ri.kf
-    for si = 1 : length(ri.reactants)
-        s = ri.reactants[si]
-        c = ri.stoichr[si]
-
-        jf *= z[s] ^ c 
-    end
-
-    jr = ri.kr
-    for si = 1 : length(ri.products)
-        s = ri.products[si]
-        c = ri.stoichp[si]
-
-        jr *= z[s] ^ c
-    end
-
+    jf = ri.kf*reaction_current_1side(ri.reactants, ri.stoichr, z)
+    jr = ri.kr*reaction_current_1side(ri.products,  ri.stoichp, z)
     return jf,jr 
 end 
 

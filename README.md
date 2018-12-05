@@ -401,6 +401,16 @@ pn = SimpleDiGraph(petri_net(ReactionNetwork(reactions)))
 
 With this, it is possible to use the functions in LightGraphs.jl to calculate various properties of the Petri net.
 
+<!--
+Note: we can replace a forcing rate k*exp(f(z))
+with an enzymatic complex, like so:
+A + B -> C + D  is transformed to:
+  A + B + E -> C1
+  C1 -> C + D + E,
+  E <-> ...  (very high rate)
+with the free energy of the complex and the enzyme production being
+chosen in a way such as to make the two reaction networks equivalent.
+-->
 #### Demos
 
 This package has been used to implement the models presented in the following research papers:

@@ -16,12 +16,3 @@ function reaction_rates(free_e, ovr_rate, beta)
     kr = ovr_rate.*exp.( 0.5*beta*free_e)
     return kf,kr
 end
-
-# Note: we can replace a forcing rate k*exp(f(z))
-# with an enzymatic complex, like so:
-# A + B -> C + D  is transformed to:
-#   A + B + E -> C1
-#   C1 -> C + D + E,
-#   E <-> ...  (very high rate)
-# with the free energy of the complex and the enzyme production being
-# chosen in a way such as to make the two reaction networks equivalent.
