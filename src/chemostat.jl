@@ -1,8 +1,12 @@
 # Functions for chemostatting reactants,
 # and producing simplified reaction nets.
 
-# Make a chemostatted version of the reaction system,
-# setting species spec to concentration z
+"""
+    chemostatted!(reactions::Vector{Reaction}, spec::Vector{Int}, z)
+
+Make a chemostatted version of the reaction system,
+setting species spec to concentration z
+"""
 function chemostatted!(reactions::Vector{Reaction}, spec::Vector{Int}, z)
     for i = 1:length(reactions)
         r = reactions[i]
@@ -39,8 +43,12 @@ function chemostatted!(reactions::Vector{Reaction}, spec::Vector{Int}, z)
     end
 end
 
-# re-label species according to permutation prm,
-# i.e. [1,3,2] maps [1,2,3]->[1,3,2]
+"""
+    relabel!(reactions::Vector{Reaction}, prm)
+
+re-label species according to permutation prm,
+i.e. [1,3,2] maps [1,2,3]->[1,3,2]
+"""
 function relabel!(reactions::Vector{Reaction}, prm)
     for i = 1:length(reactions)
         r = reactions[i]

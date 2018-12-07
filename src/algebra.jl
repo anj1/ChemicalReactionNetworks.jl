@@ -6,9 +6,14 @@ using SparseArrays
 
 full(a) = convert(Array,a)
 
-# generate stoichiometric matrices from list of reactions.
-# matrices: (nspecies,nreactions)
-# returns two matrices: reactants and products
+"""
+    stoichiometric_matrix(rn::ReactionNetwork)
+
+Generate stoichiometric matrices from list of reactions.
+Output matrices are of dimension: (`n_species`,`n_reactions`).
+
+Two matrices are returned, for reactants and products.
+"""
 function stoichiometric_matrix(rn::ReactionNetwork)
     n_species = rn.n_species 
     reactions = rn.reactions 
@@ -43,7 +48,17 @@ function findnz(l::AbstractVector)
     return idx,l[idx]
 end 
 
-# generates a list of reactions from stoichiometric matrix
+"""
+    from_stoichiometric_matrix(∇r, ∇p, kf, kr, names=[])
+
+Generates a list of reactions from stoichiometric matrices.
+Inputs:
+- ∇r, ∇p: stoichiometric matrices for reactants and products, respectively.
+- kf, kr: Forward and backward rate constants.
+- names (optional): names of the species, to be included in output network.
+Returns:
+- ReactionNetwork
+"""
 function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, kf::Vector{T}, kr::Vector{T}, names=[]) where T<:Real
     @assert size(∇r)==size(∇p)
     nspecies,nreactions = size(∇r)
@@ -58,9 +73,14 @@ function from_stoichiometric_matrix(∇r::AbstractMatrix, ∇p::AbstractMatrix, 
     return ReactionNetwork(nspecies,reactions,names)
 end
 
-# return normal form of reaction net
-# for example, S1 + S1 -> S2 becomes 2S1 -> S2
-# and S3 + S1 -> S2 becomes S1 + S3 -> S2
+"""
+    normal_form(rn::ReactionNetwork)
+
+Returns normalized form of reaction net.
+
+For example, S1 + S1 → S2 becomes 2S1 → S2
+and S3 + S1 → S2 becomes S1 + S3 → S2
+"""
 function normal_form(rn::ReactionNetwork)
     ∇r,∇p = stoichiometric_matrix(rn)
     kf = [r.kf for r in rn.reactions]
@@ -97,27 +117,30 @@ function stoichiometric_dimker(rn::ReactionNetwork, tr::Bool)
     return size(∇,2)-rank(full(∇))
 end
 
+"""
+    conservation_laws(rn::ReactionNetwork)
+
+Returns the list of 'conservation laws' of the network, 
+where each law is defined as a vector of length `n_species`.
+"""
 conservation_laws(rn::ReactionNetwork) = 
     stoichiometric_nullspace(rn, true)
 
 n_conservation_laws(rn::ReactionNetwork) = 
     stoichiometric_dimker(rn, true)
 
+"""
+    cycles(rn::ReactionNetwork)
+
+Returns the list of 'cycles' of the network, 
+where each law is defined as a vector of length `n_reactions`.
+"""
 cycles(rn::ReactionNetwork) =
     stoichiometric_nullspace(rn, false)
 
 n_cycles(rn::ReactionNetwork) = 
     stoichiometric_dimker(rn, false)
 
-# Compute steady-states for both detailed-balanced 
-# And complex-balanced states.
-
-# The steady state concentration
-# is one where the conserved moieties are distributed
-# equally among all reactants.
-
-# The equilibrium state is a steady-state where all
-# concentration currents vanish.
 # The solution is based on equation (18) in the paper:
 #   kf/kr = prod_s z[s]^del_s,r for all r
 # We take the logarithm, giving:
@@ -134,7 +157,19 @@ function log_equilibrium_state(rn::ReactionNetwork)
     logz = full(del')\free_energy
 
     return logz, del    
-end 
+end
+"""
+    equilibrium_state(rn::ReactionNetwork)
+
+Compute steady-states for both detailed-balanced and
+complex-balanced states.
+
+The steady state concentration is one where the conserved
+moieties are distributed equally among all reactants.
+
+The equilibrium state is a steady-state where all
+concentration currents vanish.
+"""
 function equilibrium_state(rn::ReactionNetwork)
     logz, del = log_equilibrium_state(rn)
     return exp.(logz)

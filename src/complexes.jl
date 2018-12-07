@@ -17,10 +17,14 @@ function composition_matrix(n_species::Integer, cmplx::Vector{SpeciesComplex})
     return Γ
 end
 
-# return composition and incidence matrices of reaction net.
-# composition matrix has dimensions n_species, n_complexes.
-# incidence matrix has dimensionality n_complex, n_reactions,
-# the entries indicate if a complex is the reactant or product
+"""
+    complex_decomposition(rn::ReactionNetwork)
+
+Return composition and incidence matrices of reaction net.
+composition matrix has dimensions (`n_species`, `n_complexes`).
+incidence matrix has dimensionality (`n_complex`, `n_reactions`),
+the entries indicate if a complex is the reactant or product.
+"""
 function complex_decomposition(rn::ReactionNetwork)
     n_species = rn.n_species 
     reactions = rn.reactions 

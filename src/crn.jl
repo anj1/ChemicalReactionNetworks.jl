@@ -3,15 +3,19 @@
 
 import Base.==,Base.hash,Base.reverse 
 
-# Note: the default definition of a reaction is reversible.
-# This simplifies analyses for most reactions.
-# Note that no truly irreversible reactions exist in nature,
-# And in fact true irreversible reactions _can't_ exist because
-# this would violate microscopic reversibility.
-# However, conceptually it can sometimes be convenient to
-# think of a reaction as being purely unidirectional,
-# in which case one can set kf or kr to 0.0, which is treated
-# as a special case.
+"""
+    ChemicalReactionNetworks.Reaction 
+
+Note: the default definition of a reaction is reversible.
+This simplifies analyses for most reactions.
+Note that no truly irreversible reactions exist in nature,
+And in fact true irreversible reactions _can't_ exist because
+this would violate microscopic reversibility.
+However, conceptually it can sometimes be convenient to
+think of a reaction as being purely unidirectional,
+in which case one can set kf or kr to 0.0, which is treated
+as a special case.
+"""
 const IntVec = AbstractArray{Unsigned,1}
 const StrVec = AbstractArray{String,1}
 mutable struct Reaction
@@ -26,7 +30,7 @@ end
 struct ReactionNetwork 
     n_species::Integer 
     reactions::Vector{Reaction}
-    names::StrVec 
+    names::StrVec     # Species names
 end 
 
 ReactionNetwork(ns::Integer,r::Vector{Reaction},names=String[]) = 
@@ -44,50 +48,32 @@ function get_nspecies(reactions::Vector{Reaction})
 end
 
 function show_reactants(io::IO, reactants::IntVec, stoich::IntVec, names::StrVec)
+    strs = String[] 
+
     for si in 1:length(reactants)
         s = reactants[si]
-        c = stoich[si]
 
-        cstr = c == 1 ? "" : "$c"
+        cstr = (stoich[si] == 1) ? "" : "$(stoich[si])"
 
-        if isempty(names)
-            print(io, "$cstr(S$s) ")
-        else
-            nm = names[s]
-            print(io, "$cstr$nm ")
-        end 
-
-        if si != length(reactants)
-            print(io, "+ ")
-        end 
+        push!(strs, isempty(names) ? "$cstr(S$s) " : "$cstr$(names[s]) ")
     end 
+
+    print(io, join(strs, "+ "))
 end 
 
 function Base.show(io::IO, r::Reaction, names=String[])
-    eq_sym = ""
-    k_str = ""
-    if r.kf == 0 
-        if r.kr == 0 
-            print(io, "[Non-reaction]")
-            return 
-        else
-            k_str = "[k-:$(r.kr)]"
-            eq_sym = "← "
-        end 
-    else 
-        if r.kr == 0 
-            k_str = "[k+:$(r.kf)]"
-            eq_sym = "→ "
-        else 
-            k_str = "[k+:$(r.kf) k-:$(r.kr)]"
-            eq_sym = "⇋ "
-        end 
-    end 
+    showdict = Dict((true, true ) => ("↮ ",""),
+                    (true, false) => ("← ","[k-:$(r.kr)]"),
+                    (false,true ) => ("→ ","[k+:$(r.kf)]"),
+                    (false,false) => ("⇋ ","[k+:$(r.kf) k-:$(r.kr)]"))
+    eq_sym, k_str = showdict[(r.kf==0, r.kr==0)]
 
+    # Show left-hand side
     show_reactants(io, r.reactants, r.stoichr, names)
 
     print(io, eq_sym)
 
+    # Show right-hand side 
     show_reactants(io, r.products, r.stoichp, names)
 
     print(io, k_str)
@@ -120,24 +106,23 @@ function reaction_current(ri::Reaction, z)
     return jf,jr 
 end 
 
+function mass_action_1side!(dz, reactants::IntVec, stoich::IntVec, j, pos::Bool)
+    for si = 1 : length(reactants)
+        s = reactants[si]
+        c = stoich[si]
+
+        dz[s] += pos ? c*j : -c*j
+    end
+end 
+
 function mass_action!(dz, ri::Reaction, z)
     jf,jr = reaction_current(ri, z)
     j=jf-jr
 
     # calculate change in concentration
-    for si = 1 : length(ri.reactants)
-        s = ri.reactants[si]
-        c = ri.stoichr[si]
+    mass_action_1side!(dz, ri.reactants, ri.stoichr, j, false)
 
-        dz[s] -= c*j
-    end
-
-    for si = 1 : length(ri.products)
-        s = ri.products[si]
-        c = ri.stoichp[si]
-
-        dz[s] += c*j
-    end
+    mass_action_1side!(dz, ri.products,  ri.stoichp, j, true)
 end 
 
 function precompute_concpowers(z, n_powers)
