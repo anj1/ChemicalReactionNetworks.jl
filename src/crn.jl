@@ -3,8 +3,22 @@
 
 import Base.==,Base.hash,Base.reverse 
 
+const IntVec = AbstractArray{Unsigned,1}
+const StrVec = AbstractArray{String,1}
+
 """
-    ChemicalReactionNetworks.Reaction 
+    Reaction(
+        reactants::Vector
+        stoichr::Vector 
+        products::Vector 
+        stoichp::Vector
+        kf
+        kr,
+    )
+
+Defines a reaction by the given reactants and stoichiometry `stoichr`, 
+the given products and stoichiometry `stoichp`, and the forward and backward
+rate constants `kf` and `kr`.
 
 Note: the default definition of a reaction is reversible.
 This simplifies analyses for most reactions.
@@ -16,8 +30,6 @@ think of a reaction as being purely unidirectional,
 in which case one can set kf or kr to 0.0, which is treated
 as a special case.
 """
-const IntVec = AbstractArray{Unsigned,1}
-const StrVec = AbstractArray{String,1}
 mutable struct Reaction
     reactants::IntVec # vector of reactants
     stoichr::IntVec   # vector of stoichiometric coefficients of reactants
