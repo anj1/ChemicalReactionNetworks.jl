@@ -1,5 +1,4 @@
 using ChemicalReactionNetworks
-using DynamicalSystems
 
 ###
 chems = ["CH₄", "O₂", "CO₂", "H₂O"]
