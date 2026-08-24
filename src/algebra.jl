@@ -96,7 +96,7 @@ function stoichiometric_nullspace(rn::ReactionNetwork, tr::Bool)
 
     ∇ = tr ? transpose(∇) : ∇
 
-    S = MatrixSpace(ZZ, size(∇)...)
+    S = ZZMatrixSpace(size(∇)...)
 
     r,ns = nullspace(S(full(∇)))
     m,n = size(ns)
