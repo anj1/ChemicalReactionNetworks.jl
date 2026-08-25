@@ -1,7 +1,7 @@
 # This file contains the base definitions,
 # Plus mass-action kinetics.
 
-import Base.==,Base.hash,Base.reverse 
+import Base.==,Base.hash,Base.reverse
 
 const IntVec = AbstractArray{Unsigned,1}
 const StrVec = AbstractArray{String,1}
@@ -9,14 +9,14 @@ const StrVec = AbstractArray{String,1}
 """
     Reaction(
         reactants::Vector
-        stoichr::Vector 
-        products::Vector 
+        stoichr::Vector
+        products::Vector
         stoichp::Vector
         kf
         kr,
     )
 
-Defines a reaction by the given reactants and stoichiometry `stoichr`, 
+Defines a reaction by the given reactants and stoichiometry `stoichr`,
 the given products and stoichiometry `stoichp`, and the forward and backward
 rate constants `kf` and `kr`.
 
@@ -39,28 +39,28 @@ mutable struct Reaction
     kr::Number        # rate constant, backward. Zero means no backward reaction.
 end
 
-struct ReactionNetwork 
-    n_species::Integer 
+struct ReactionNetwork
+    n_species::Integer
     reactions::Vector{Reaction}
     names::StrVec     # Species names
-end 
+end
 
-ReactionNetwork(ns::Integer,r::Vector{Reaction},names=String[]) = 
+ReactionNetwork(ns::Integer,r::Vector{Reaction},names=String[]) =
     ReactionNetwork(ns,r,names)
 
-ReactionNetwork(r::Vector{Reaction},names=String[]) = 
+ReactionNetwork(r::Vector{Reaction},names=String[]) =
     ReactionNetwork(get_nspecies(r),r,names)
 
 function get_nspecies(reactions::Vector{Reaction})
-    ns = 0 
+    ns = 0
     for r in reactions
         ns = maximum(cat(dims=1,ns,r.reactants,r.products))
-    end 
-    return ns 
+    end
+    return ns
 end
 
 function show_reactants(io::IO, reactants::IntVec, stoich::IntVec, names::StrVec)
-    strs = String[] 
+    strs = String[]
 
     for si in 1:length(reactants)
         s = reactants[si]
@@ -68,10 +68,10 @@ function show_reactants(io::IO, reactants::IntVec, stoich::IntVec, names::StrVec
         cstr = (stoich[si] == 1) ? "" : "$(stoich[si])"
 
         push!(strs, isempty(names) ? "$cstr(S$s) " : "$cstr$(names[s]) ")
-    end 
+    end
 
     print(io, join(strs, "+ "))
-end 
+end
 
 function Base.show(io::IO, r::Reaction, names=String[])
     showdict = Dict((true, true ) => ("↮ ",""),
@@ -85,19 +85,19 @@ function Base.show(io::IO, r::Reaction, names=String[])
 
     print(io, eq_sym)
 
-    # Show right-hand side 
+    # Show right-hand side
     show_reactants(io, r.products, r.stoichp, names)
 
     print(io, k_str)
-end 
+end
 
 function Base.show(io::IO, rn::ReactionNetwork)
     println(io, "Reaction Network: ")
-    for r in rn.reactions 
+    for r in rn.reactions
         show(io, r, rn.names)
         println(io)
     end
-end 
+end
 
 function reaction_current_1side(reactants::IntVec, stoich::IntVec, z)
     j = 1
@@ -106,26 +106,26 @@ function reaction_current_1side(reactants::IntVec, stoich::IntVec, z)
         s = reactants[si]
         c = stoich[si]
 
-        j *= z[s] ^ c 
+        j *= z[s] ^ c
     end
 
-    return j 
-end 
+    return j
+end
 
 function reaction_current(ri::Reaction, z)
     jf = ri.kf*reaction_current_1side(ri.reactants, ri.stoichr, z)
     jr = ri.kr*reaction_current_1side(ri.products,  ri.stoichp, z)
-    return jf,jr 
-end 
+    return jf,jr
+end
 
 function mass_action_1side!(dz, reactants::IntVec, stoich::IntVec, j, pos::Bool)
     for si = 1 : length(reactants)
         s = reactants[si]
         c = stoich[si]
 
-        dz[s] += pos ? c*j : -c*j
+        dz[s] += pos ? c*j : -(c*j)
     end
-end 
+end
 
 function mass_action!(dz, ri::Reaction, z)
     jf,jr = reaction_current(ri, z)
@@ -135,7 +135,7 @@ function mass_action!(dz, ri::Reaction, z)
     mass_action_1side!(dz, ri.reactants, ri.stoichr, j, false)
 
     mass_action_1side!(dz, ri.products,  ri.stoichp, j, true)
-end 
+end
 
 function precompute_concpowers(z, n_powers)
     z_powers = zeros(length(z), n_powers)
@@ -146,7 +146,7 @@ function precompute_concpowers(z, n_powers)
     end
 
     return z_powers
-end 
+end
 
 # evolve concentration of reactants based on mass-action kinetics.
 # re: list of reactions
@@ -159,7 +159,7 @@ function mass_action(reactions::Vector{Reaction}, z)
         mass_action!(dz, ri, z)
     end
 
-    return dz 
+    return dz
 end
 
 function jacobian(rn::ReactionNetwork)
@@ -185,9 +185,9 @@ reverse(r::Reaction) = Reaction(r.products,r.stoichp,r.reactants,r.stoichr,r.kr,
 isredundant(r::Reaction) = (r.products == r.reactants) && (r.stoichp == r.stoichr )
 
 function test_equality(r::Reaction,p::Reaction)
-    return (r.stoichr == p.stoichr) && 
-           (r.stoichp == p.stoichp) && 
-           (r.reactants == p.reactants) && 
+    return (r.stoichr == p.stoichr) &&
+           (r.stoichp == p.stoichp) &&
+           (r.reactants == p.reactants) &&
            (r.products  == p.products) &&
            (r.kf == p.kf) &&
            (r.kr == p.kr)
