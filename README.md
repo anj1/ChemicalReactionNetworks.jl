@@ -95,8 +95,9 @@ dz = mass_action(reactions, z)
 Where reactions is a list of `Reaction`s, and `z` is some instantaneous concentration of all the chemical species. This function returns the *rate of change* of the instantaneous concentration. Thus by feeding this function into an ODE solver, such as a stiff 2nd-order solver, one can solve for the full time-dynamics of the network. Consider a very simple example, a system consisting of just one reaction, the reaction between diatomic nitrogen and diatomic hydrogen to produce ammonia:
 
 ```julia
-chems = ["N", "H₂", "NH₃"]
-reactions = [Reaction([1,2],[1,3],[3],[2],2.0,1.0,chems)]
+chems = ["N₂", "H₂", "NH₃"]
+reactions = [Reaction([1,2],[1,3],[3],[2],2.0,1.0)]
+rn = ReactionNetwork(reactions, chems)
 ```
 
 Which gives the output:
@@ -135,8 +136,9 @@ Here is a more realistic example - an example of enzyme kinetics given by the Mi
 
 ```julia
 chems = ["S","P","E","ES"]
-reactions = [Reaction([1,3],[1,1],[4],[1],1.0,1.0,chems),
-             Reaction([4],[1],[2,3],[1,1],1.0,0.0,chems)]
+reactions = [Reaction([1,3],[1,1],[4],[1],1.0,1.0),
+             Reaction([4],[1],[2,3],[1,1],1.0,0.0)]
+rn = ReactionNetwork(reactions, chems)
 ```
 
 ```
@@ -236,10 +238,10 @@ Consider the simple catalytic system:
 
 ```julia
 chems = ["A₂","B","AB","Z","AZ","BZ"]
-reactions = [Reaction([1,4],[1,2],[5],[2],1.0,1.0,chems),
-             Reaction([2,4],[1,1],[6],[1],1.0,1.0,chems),
-             Reaction([5,6],[1,1],[3,4],[1,2],1.0,0.0,chems)]
-@show ReactionNetwork(reactions, chems)
+reactions = [Reaction([1,4],[1,2],[5],[2],1.0,1.0),
+             Reaction([2,4],[1,1],[6],[1],1.0,1.0),
+             Reaction([5,6],[1,1],[3,4],[1,2],1.0,0.0)]
+@show ReactionNetwork(reactions)
 ```
 ```
 Reaction Network:
@@ -289,8 +291,8 @@ For example, we can consider the enzyme example from before, and chemostat the s
 ```julia
 rt = []
 for conc_subs = 0.01:0.01:10.0
-    reactions = [Reaction([1,3],[1,1],[4],[1],1.0,1.0,chems),
-                    Reaction([4],[1],[2,3],[1,1],1.0,1e-15,chems)]
+    reactions = [Reaction([1,3],[1,1],[4],[1],1.0,1.0),
+                    Reaction([4],[1],[2,3],[1,1],1.0,1e-15)]
     chemostatted!(reactions, [1], [conc_subs])
     ez = equilibrium_state(ReactionNetwork(reactions))
     ez[2]=0.0
